@@ -1,368 +1,157 @@
 module core_model
   import riscv_pkg::*;
 (
-    input  logic clk_i,
-    input  logic rstn_i,
-    input  logic  [XLEN-1:0] addr_i,
-    output logic             update_o,
-    output logic  [XLEN-1:0] data_o,
-    output logic  [XLEN-1:0] pc_o,
-    output logic  [XLEN-1:0] instr_o,
-    output logic  [     4:0] reg_addr_o,
-    output logic  [XLEN-1:0] reg_data_o
+  input  logic clk_i,
+  input  logic rstn_i,
+  input  logic  [XLEN-1:0] addr_i,
+  output logic  [XLEN-1:0] data_o,
+  output logic  [XLEN-1:0] pc_o,
+  output logic  [XLEN-1:0] instr_o,
+  output logic  [     4:0] reg_addr_o,
+  output logic  [XLEN-1:0] reg_data_o
 );
-    // memory
-    parameter int MEM_SIZE = 2048;
-    logic [31:0]     imem [MEM_SIZE-1:0];
-    logic [31:0]     dmem [MEM_SIZE-1:0];
-    logic [XLEN-1:0] rf   [31:0];
-    initial $readmemh("./test/test.hex", imem, 0, MEM_SIZE);
-    // pc + instr
-    logic [XLEN-1:0] pc_d;
-    logic [XLEN-1:0] pc_q;
-    logic [XLEN-1:0] jump_pc_d;
-    logic            jump_pc_valid_d;
-    logic [XLEN-1:0] instr_d;
-    assign pc_o = pc_q;
-    assign data_o = dmem[addr_i];
-    assign instr_o = instr_d;
-    assign reg_addr_o = rf_wr_enable ? instr_d[11:7] : '0;
-    assign reg_data_o = rd_data;
 
-    logic [XLEN-1:0] rs1_data;      // source register 1 data
-    logic [XLEN-1:0] rs2_data;      // source register 2 data
-    logic [XLEN-1:0] imm_data;      // immediate data
-    logic [     4:0] shamt_data;
-    logic [XLEN-1:0] rd_data;
-    logic            rf_wr_enable;  // register file write enable
-    logic [XLEN-1:0] mem_wr_data;   // memory write data
-    logic [XLEN-1:0] mem_wr_addr;   // memory write address
-    logic            mem_wr_enable; // memory write enable
+logic  [XLEN-1:0]    pc_FtoDec       ;          
+logic  [XLEN-1:0]    instr_FtoDec    ;  
+
+logic  [XLEN-1:0]    pc_DecToEx        ;          
+logic  [XLEN-1:0]    instr_pc_DecToEx  ;    
+operation_e          operation_DecToEx ;   
+logic  [XLEN-1:0]    rs1_DecToEx       ;       
+logic  [XLEN-1:0]    rs2_DecToEx       ;
+logic  [     4:0]    rs1D_idx       ;
+logic  [     4:0]    rs2D_idx       ;
+logic  [     4:0]    rd_addr_DecToEx   ;     
+logic                rd_wrt_ena_DecToEx;  
+logic                mem_wr_ena_DecToEx;  
+logic  [     4:0]    shamt_data_DecToEx;  
+logic  [XLEN-1:0]    imm_DecToEx       ;         
+
+logic  [XLEN-1:0] pc_ExToMem;
+logic  [XLEN-1:0] instr_ExToMem;
+operation_e       operation_ExToMem;
+logic  [XLEN-1:0] rs1_ExToMem;
+rd_port_t         rd_port_ExToMem;
+logic             mem_wrt_ena_ExToMem;
+logic  [XLEN-1:0] mem_wrt_addr_ExToMem;
+logic  [XLEN-1:0] mem_wrt_data_ExToMem;
 
 
-    always_ff @(posedge clk_i) begin : pc_change_ff
-      if (~rstn_i) begin
-        pc_q <= 'h8000_0000;
-        update_o <= 0;
-      end else begin
-        update_o <= 1;
-        pc_q <= pc_d;
-      end
-    end
+rd_port_t         rd_port_memToWb;
+logic  [XLEN-1:0] next_pc;
+logic             next_pc_enable;
 
-    always_comb begin : pc_change_comb
-      pc_d = pc_q;
-      if (jump_pc_valid_d) begin
-        pc_d = jump_pc_d;
-      end else begin
-        pc_d = pc_q + 4;
-      end
-        instr_d = imem[pc_q[$clog2(MEM_SIZE*4)-1:2]];
-    end
+assign reg_addr_o = (rd_port_memToWb.valid) ? rd_port_memToWb.addr : '0;
+assign reg_data_o = rd_port_memToWb.data;
 
-    always_comb begin : decode_block
-      imm_data    = 0;
-      shamt_data  = 0;
-      rs1_data    = 0;
-      rs2_data    = 0;
+//forwarding signals
 
-      case(instr_d[6:0])
-        OpcodeLui:    imm_data = {instr_d[31:12] , 12'b0};
-        OpcodeAuipc:  imm_data = {instr_d[31:12] , 12'b0};
-        OpcodeJal:    imm_data = {{12'(signed'(instr_d[31]))}, instr_d[19:12], instr_d[20], instr_d[30:21], 1'b0};
-        OpcodeJalr: 
-        if (instr_d[14:12] == F3_JALR) begin
-          rs1_data = rf[instr_d[19:15]];
-          imm_data = {{21'(signed'(instr_d[31]))}, instr_d[30:20]};
-        end
-        OpcodeBranch:
-          if (instr_d[14:12] inside {F3_BEQ, F3_BNE, F3_BLT, F3_BGE, F3_BLTU, F3_BGEU}) begin
-            rs1_data = rf[instr_d[19:15]];
-            rs2_data = rf[instr_d[24:20]];
-            imm_data = {{19'(signed'(instr_d[31]))}, instr_d[31], instr_d[7], instr_d[30:25], instr_d[11:8], 1'b0};
-          end
-        OpcodeLoad: begin
-          rs1_data = rf[instr_d[19:15]];
-          imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:20]};
-        end
-        OpcodeStore: begin
-          rs1_data = rf[instr_d[19:15]];
-          rs2_data = rf[instr_d[24:20]];
-          imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:25], instr_d[11:7]};
-        end
-        OpcodeOpImm:
-          case(instr_d[14:12])
-            F3_ADDI, F3_SLTI, F3_SLTIU, F3_XORI, F3_ORI, F3_ANDI: begin
-              rs1_data = rf[instr_d[19:15]];
-              imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:20]};
-            end
-            F3_SLLI:
-              if (instr_d[31:25] == F7_SLLI) begin
-                shamt_data = instr_d[24:20];
-                rs1_data = rf[instr_d[19:15]];
-              end
-            F3_SRLI :
-              if (instr_d[31:25] inside {F7_SRLI, F7_SRAI}) begin
-                shamt_data = instr_d[24:20];
-                rs1_data = rf[instr_d[19:15]];
-              end
-          endcase
-        OpcodeOp:
-          case(instr_d[14:12])
-            F3_ADD:
-              if (instr_d[31:25] inside {F7_ADD, F7_SUB}) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_SLL :
-              if (instr_d[31:25] == F7_SLL) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_SLT :
-              if (instr_d[31:25] == F7_SLT) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_SLTU:
-              if (instr_d[31:25] == F7_SLTU) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_XOR :
-              if (instr_d[31:25] == F7_XOR) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_SRL :
-              if (instr_d[31:25] inside {F7_SRL,F7_SRA}) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_OR  :
-              if (instr_d[31:25] == F7_OR) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-            F3_AND :
-              if (instr_d[31:25] == F7_AND) begin
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
-              end
-          endcase
-          default: ;
-      endcase
-    end
+forwarding_e forwardA;
+forwarding_e forwardB;
+
+logic  [XLEN-1:0] rs1_final;
+logic  [XLEN-1:0] rs2_final;
 
 
-    always_comb begin : execute_block
-      jump_pc_valid_d = 0;
-      jump_pc_d = 0;
-      rd_data = 0;
-      rf_wr_enable = 0;
-      mem_wr_enable = 0;
-      mem_wr_data = 0;
-      mem_wr_addr = 0;
-      case(instr_d[6:0])
-        OpcodeLui: begin
-          rd_data = imm_data;
-          rf_wr_enable = 1'b1;
-        end 
-        OpcodeAuipc: begin
-          rd_data =  imm_data + pc_q;
-          rf_wr_enable = 1'b1;
-        end
-        OpcodeJal: begin
-          jump_pc_valid_d = 1'b1;
-          jump_pc_d = imm_data + pc_q;
-          rd_data = pc_q + 4;
-          rf_wr_enable = 1'b1;
-        end
-        OpcodeJalr:begin
-          jump_pc_valid_d = 1'b1;
-          jump_pc_d = imm_data + rs1_data;
-          rd_data = pc_q + 4;
-        end
-        OpcodeBranch:
-          case(instr_d[14:12])
-            F3_BEQ  : if (rs1_data == rs2_data) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-            F3_BNE  : if (rs1_data != rs2_data) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-            F3_BLT  : if ($signed(rs1_data) < $signed(rs2_data)) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-            F3_BGE  : if ($signed(rs1_data) >= $signed(rs2_data)) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-            F3_BLTU : if (rs1_data < rs2_data) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-            F3_BGEU : if (rs1_data >= rs2_data) begin
-              jump_pc_d = imm_data + pc_q;
-              jump_pc_valid_d = 1'b1;
-            end 
-          endcase
-        OpcodeLoad:
-          case(instr_d[14:12])
-            F3_LB  : begin
-              rd_data = {{24'({dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][7]})}, dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][7:0]};
-              rf_wr_enable = 1;
-            end 
-            F3_LH  : begin
-              rd_data = {{16'({dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][7]})}, dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][15:0]};
-              rf_wr_enable = 1;
-            end 
-            F3_LW  : begin
-              rd_data =dmem[rs1_data[$clog2(MEM_SIZE)-1:0]];
-              rf_wr_enable = 1;
-            end 
-            F3_LBU : begin
-              rd_data = {{24'b0}, dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][7:0]};
-              rf_wr_enable = 1;
-            end 
-            F3_LHU : begin
-              rd_data = {{16'b0}, dmem[rs1_data[$clog2(MEM_SIZE)-1:0]][15:0]};
-              rf_wr_enable = 1;
-            end 
-          endcase
-        OpcodeStore:
-          case(instr_d[14:12])
-            F3_SB : begin
-              mem_wr_enable = 1'b1;
-              mem_wr_data = rs2_data;
-              mem_wr_addr = rs1_data + imm_data;
-            end
-            F3_SH : begin
-              mem_wr_enable = 1'b1;
-              mem_wr_data = rs2_data;
-              mem_wr_addr = rs1_data + imm_data;
-            end
-            F3_SW : begin
-              mem_wr_enable = 1'b1;
-              mem_wr_data = rs2_data;
-              mem_wr_addr = rs1_data + imm_data;
-            end
-          endcase
-        OpcodeOpImm:
-          case(instr_d[14:12])
-            F3_ADDI : begin
-              rf_wr_enable = 1'b1;
-              rd_data = $signed(imm_data) + $signed(rs1_data);
-            end
-            F3_SLTI : begin
-              rf_wr_enable = 1'b1;
-              if ($signed(rs1_data) < $signed(imm_data)) rd_data = 32'b1;
-            end
-            F3_SLTIU: begin
-              rf_wr_enable = 1'b1;
-              if (rs1_data < imm_data) rd_data = 32'b1;
-            end
-            F3_XORI : begin
-              rf_wr_enable = 1'b1;
-              rd_data = rs1_data ^ imm_data;
-            end
-            F3_ORI  :begin
-              rf_wr_enable = 1'b1;
-              rd_data = rs1_data | imm_data;
-            end
-            F3_ANDI :begin
-              rf_wr_enable = 1'b1;
-              rd_data = rs1_data & imm_data;
-            end
-            F3_SLLI :
-              if (instr_d[31:25] == F7_SLLI) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data << shamt_data;
-              end
-            F3_SRLI : begin
-              if (instr_d[31:25] == F7_SRLI) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data >> shamt_data;
-              end else  if (instr_d[31:25] == F7_SRAI) begin
-                rf_wr_enable = 1'b1;
-                rd_data = $signed(rs1_data) >>> shamt_data;
-              end
-            end
-          endcase
-        OpcodeOp:
-          case(instr_d[14:12])
-            F3_ADD :
-              if (instr_d[31:25] == F7_ADD) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data + rs2_data;
-              end else if (instr_d[31:25] == F7_SUB) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data - rs2_data;
-              end
-            F3_SLL :
-              if (instr_d[31:25] == F7_SLL) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data << rs2_data;
-              end
-            F3_SLT :
-              if (instr_d[31:25] == F7_SLT) begin
-                rf_wr_enable = 1'b1;
-                if ($signed(rs1_data) < $signed(rs2_data))  rd_data = 32'b1;
-              end
-            F3_SLTU:
-              if (instr_d[31:25] == F7_SLTU) begin
-                rf_wr_enable = 1'b1;
-                if (rs1_data < rs2_data)  rd_data = 32'b1;
-              end
-            F3_XOR :
-              if (instr_d[31:25] == F7_XOR) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data ^ rs2_data;
-              end
-            F3_SRL :
-              if (instr_d[31:25] == F7_SRL) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data >> rs2_data;
-              end else if (instr_d[31:25] == F7_SRA) begin
-                rf_wr_enable = 1'b1;
-                rd_data = $signed(rs1_data) >>> rs2_data;
-              end
-            F3_OR  :
-              if (instr_d[31:25] == F7_OR) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data | rs2_data;
-              end
-            F3_AND :
-              if (instr_d[31:25] == F7_AND) begin
-                rf_wr_enable = 1'b1;
-                rd_data = rs1_data & rs2_data;
-              end
-          endcase
-      endcase
-    end
+fetch i_fetch(
+  .clk_i            (clk_i),
+  .rstn_i           (rstn_i),
+  .next_pc_i        (next_pc),
+  .next_pc_enable_i (next_pc_enable),
+  .pcF_o             (pc_FtoDec),
+  .instrF_o          (instr_FtoDec)
+);
 
-    always_ff @(posedge clk_i) begin
-      if (!rstn_i) begin
-      end else if (mem_wr_enable) begin
-        case(instr_d[14:12])
-          F3_SB :         dmem[mem_wr_addr[$clog2(MEM_SIZE)-1:0]][ 7:0] <= rs2_data[ 7:0];
-          F3_SH :         dmem[mem_wr_addr[$clog2(MEM_SIZE)-1:0]][15:0] <= rs2_data[15:0];
-          F3_SW :         dmem[mem_wr_addr[$clog2(MEM_SIZE)-1:0]]       <= rs2_data;
-        endcase
-      end
-    end
+decode i_decode(
+  .clk_i          (clk_i             ),
+  .rstn_i         (rstn_i            ),
+  .pcD_i          (pc_FtoDec         ),
+  .instrD_i       (instr_FtoDec      ),
+  .rdWB_port_i    (rd_port_memToWb   ),
+  .pcD_o          (pc_DecToEx        ),
+  .instrD_o       (instr_pc_DecToEx  ),
+  .operationD_o   (operation_DecToEx ),
+  .rs1D_o         (rs1_DecToEx       ),
+  .rs2D_o         (rs2_DecToEx       ),
+  .rs1D_idx_o     (rs1D_idx          ),
+  .rs2D_idx_o     (rs2D_idx          ),   
+  .rdD_addr_o     (rd_addr_DecToEx   ), 
+  .rdD_wrt_ena_o  (rd_wrt_ena_DecToEx),
+  .memD_wr_ena_o  (mem_wr_ena_DecToEx),
+  .shamt_dataD_o  (shamt_data_DecToEx),
+  .immD_o         (imm_DecToEx       )
+);
 
-    always_ff @(posedge clk_i) begin
-      if (!rstn_i) begin
-        for (int i=0; i<32; ++i) begin
-          rf[i] <= '0;
-        end
-      end else if (rf_wr_enable && instr_d[11:7] != '0) begin
-        rf[instr_d[11:7]] <= rd_data;
-      end
-    end
+execute i_execute(
+  .clk_i          (clk_i),
+  .rstn_i         (rstn_i),
+  .pcE_i           (pc_DecToEx),
+  .immE_i          (imm_DecToEx),
+  .instrE_i  (instr_pc_DecToEx),
+  .rdE_addr_i      (rd_addr_DecToEx),
+  .operationE_i    (operation_DecToEx),
+  .rdE_wrt_ena_i   (rd_wrt_ena_DecToEx),
+  .memE_wrt_ena_i  (mem_wr_ena_DecToEx),
+  .shamt_dataE_i   (shamt_data_DecToEx),
+  .rs1E_i          (rs1_final),
+  .rs2E_i          (rs2_final),
+  .rs1E_o          (rs1_ExToMem),
+  .rdE_port_o      (rd_port_ExToMem),
+  .operationE_o    (operation_ExToMem),
+  .memE_wrt_ena_o  (mem_wrt_ena_ExToMem),
+  .memE_wrt_addr_o (mem_wrt_addr_ExToMem),
+  .memE_wrt_data_o (mem_wrt_data_ExToMem),
+  .pcE_o           (pc_ExToMem),
+  .instrE_o  (instr_ExToMem),
+  .next_pc_ena_o  (next_pc_enable),
+  .next_pc_o      (next_pc)
+);
+
+memory i_memory(
+  .clk_i         (clk_i),
+  .rstn_i        (rstn_i),
+  .rs1M_i         (rs1_ExToMem),
+  .pcM_i          (pc_ExToMem),
+  .instrM_i (instr_ExToMem),
+  .operationM_i   (operation_ExToMem),
+  .rdM_port_i     (rd_port_ExToMem),
+  .memM_wrt_ena_i (mem_wrt_ena_ExToMem),
+  .memM_wrt_addr_i(mem_wrt_addr_ExToMem),
+  .memM_wrt_data_i(mem_wrt_data_ExToMem),
+  .addrM_i        (addr_i),
+  .pcM_o          (pc_o),
+  .instrM_o (instr_o),
+  .rdM_port_o     (rd_port_memToWb),
+  .dataM_o        (data_o) //
+);
+
+hazard_unit i_forwarding_unit(
+  .rs1D_i       (rs1D_idx),
+  .rs2D_i       (rs2D_idx),
+  .rdE_i        (rd_port_ExToMem.addr),
+  .rdM_i        (rd_port_memToWb.addr),
+  .rdE_wr_ena_i (rd_port_ExToMem.valid),
+  .rdM_wr_ena_i (rd_port_memToWb.valid),
+  .forwardA_o   (forwardA),
+  .forwardB_o   (forwardB)
+);
+
+always_comb begin :data_forwarding_rs1
+  case(forwardA)
+    NO_FRWD: rs1_final = rs1_DecToEx;
+    EX_FRWD: rs1_final = rd_port_ExToMem.data;
+    MEM_FRWD: rs1_final = rd_port_memToWb.data;
+  default: rs1_final = rs1_DecToEx;
+  endcase
+end
+
+always_comb begin :data_forwarding_rs2
+  case(forwardB)
+    NO_FRWD: rs2_final = rs2_DecToEx;
+    EX_FRWD: rs2_final = rd_port_ExToMem.data;
+    MEM_FRWD: rs2_final = rd_port_memToWb.data;
+  default: rs2_final = rs2_DecToEx;
+  endcase
+end
 
 endmodule

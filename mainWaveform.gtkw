@@ -1,0 +1,90 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Sun May 11 20:45:00 2025
+[*]
+[dumpfile] "/home/ayhan/riscv-example/dump.vcd"
+[dumpfile_mtime] "Sun May 11 19:29:55 2025"
+[dumpfile_size] 2061166
+[savefile] "/home/ayhan/riscv-example/mainWaveform.gtkw"
+[timestart] 103
+[size] 1920 1080
+[pos] 38 59
+*-2.100000 106 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.tb.
+[treeopen] TOP.tb.i_core_model.
+[sst_width] 276
+[signals_width] 270
+[sst_expanded] 1
+[sst_vpaned_height] 685
+@200
+-CORE_OUT
+@22
+TOP.tb.i_core_model.instr_o[31:0]
+@24
+TOP.tb.i_core_model.reg_addr_o[4:0]
+@22
+TOP.tb.i_core_model.reg_data_o[31:0]
+TOP.tb.i_core_model.rs1_final[31:0]
+TOP.tb.i_core_model.rs2_final[31:0]
+@200
+-FETCH SIGNALS
+@22
+TOP.tb.i_core_model.i_fetch.instrF_o[31:0]
+TOP.tb.i_core_model.i_fetch.pcF_o[31:0]
+@28
+TOP.tb.i_core_model.i_fetch.next_pc_enable_i
+@22
+TOP.tb.i_core_model.i_fetch.next_pc_i[31:0]
+@200
+-DECODE SIGNALS
+@22
+TOP.tb.i_core_model.i_decode.instrD_o[31:0]
+@24
+TOP.tb.i_core_model.i_decode.rdD_addr_o[4:0]
+TOP.tb.i_core_model.i_decode.rs1D_idx_o[4:0]
+TOP.tb.i_core_model.i_decode.rs2D_idx_o[4:0]
+@22
+TOP.tb.i_core_model.i_decode.rs1D_o[31:0]
+TOP.tb.i_core_model.i_decode.rs2D_o[31:0]
+@100002028
+^1 /home/ayhan/riscv-example/op_enum.gtkw
+TOP.tb.i_core_model.i_decode.operationD_o[5:0]
+@200
+-EXECUTE SIGNALS
+@23
+TOP.tb.i_core_model.i_execute.instrE_o[31:0]
+@24
+TOP.tb.i_core_model.i_execute.rdE_addrout[4:0]
+@22
+TOP.tb.i_core_model.i_execute.rdE_dataout[31:0]
+TOP.tb.i_core_model.i_execute.rs1E_i[31:0]
+TOP.tb.i_core_model.i_execute.rs2E_i[31:0]
+@420
+TOP.tb.i_core_model.i_execute.immE_i[31:0]
+@100002028
+^1 /home/ayhan/riscv-example/op_enum.gtkw
+TOP.tb.i_core_model.i_execute.operationE_o[5:0]
+@200
+-MEMORY SIGNALS
+@22
+TOP.tb.i_core_model.i_memory.instrM_o[31:0]
+TOP.tb.i_core_model.i_memory.rdM_addrout[4:0]
+TOP.tb.i_core_model.i_memory.rdM_dataout[31:0]
+@200
+-FORWARDING SIGNALS
+@100002028
+^2 /home/ayhan/riscv-example/frwd_enum.gtkw
+TOP.tb.i_core_model.i_forwarding_unit.forwardA_o[1:0]
+^2 /home/ayhan/riscv-example/frwd_enum.gtkw
+TOP.tb.i_core_model.i_forwarding_unit.forwardB_o[1:0]
+@24
+TOP.tb.i_core_model.i_forwarding_unit.rs1D_i[4:0]
+TOP.tb.i_core_model.i_forwarding_unit.rs2D_i[4:0]
+TOP.tb.i_core_model.i_forwarding_unit.rdE_i[4:0]
+TOP.tb.i_core_model.i_forwarding_unit.rdM_i[4:0]
+@28
+TOP.tb.i_core_model.i_forwarding_unit.rdE_wr_ena_i
+TOP.tb.i_core_model.i_forwarding_unit.rdM_wr_ena_i
+[pattern_trace] 1
+[pattern_trace] 0
