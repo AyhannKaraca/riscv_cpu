@@ -15,8 +15,9 @@ module core_model
 logic  [XLEN-1:0]    pc_FtoDec       ;          
 logic  [XLEN-1:0]    instr_FtoDec    ;
 logic                pc_en           ;  
-logic                stall            ;//load-use hazard  
+logic                stall           ;//load-use hazard  
 logic                stall_ExToMem   ;
+logic                flush           ;//control hazard
 
 logic  [XLEN-1:0]    pc_DecToEx        ;          
 logic  [XLEN-1:0]    instr_pc_DecToEx  ;    
@@ -70,6 +71,7 @@ fetch i_fetch(
 decode i_decode(
   .clk_i          (clk_i             ),
   .rstn_i         (rstn_i            ),
+  .flush_i        (flush             ),
   .pcD_i          (pc_FtoDec         ),
   .instrD_i       (instr_FtoDec      ),
   .rdWB_port_i    (rd_port_memToWb   ),
@@ -88,12 +90,13 @@ decode i_decode(
 );
 
 execute i_execute(
-  .clk_i          (clk_i),
-  .rstn_i         (rstn_i),
-  .stallE_i         (stall),
+  .clk_i           (clk_i),
+  .rstn_i          (rstn_i),
+  .flush_i         (flush),
+  .stallE_i        (stall),
   .pcE_i           (pc_DecToEx),
   .immE_i          (imm_DecToEx),
-  .instrE_i  (instr_pc_DecToEx),
+  .instrE_i        (instr_pc_DecToEx),
   .rdE_addr_i      (rd_addr_DecToEx),
   .operationE_i    (operation_DecToEx),
   .rdE_wrt_ena_i   (rd_wrt_ena_DecToEx),
@@ -108,19 +111,19 @@ execute i_execute(
   .memE_wrt_addr_o (mem_wrt_addr_ExToMem),
   .memE_wrt_data_o (mem_wrt_data_ExToMem),
   .pcE_o           (pc_ExToMem),
-  .instrE_o  (instr_ExToMem),
-  .stallE_o  (stall_ExToMem),
-  .next_pc_ena_o  (next_pc_enable),
-  .next_pc_o      (next_pc)
+  .instrE_o        (instr_ExToMem),
+  .stallE_o        (stall_ExToMem),
+  .next_pc_ena_o   (next_pc_enable),
+  .next_pc_o       (next_pc)
 );
 
 memory i_memory(
-  .clk_i         (clk_i),
-  .rstn_i        (rstn_i), 
-  .stallM_i        (stall_ExToMem), 
+  .clk_i          (clk_i),
+  .rstn_i         (rstn_i), 
+  .stallM_i       (stall_ExToMem), 
   .rs1M_i         (rs1_ExToMem),
   .pcM_i          (pc_ExToMem),
-  .instrM_i (instr_ExToMem),
+  .instrM_i       (instr_ExToMem),
   .operationM_i   (operation_ExToMem),
   .rdM_port_i     (rd_port_ExToMem),
   .memM_wrt_ena_i (mem_wrt_ena_ExToMem),
@@ -131,7 +134,7 @@ memory i_memory(
   .instrM_o       (instr_o),
   .rdM_port_o     (rd_port_memToWb),
   .dataM_o        (data_o), //
-  .stallM_o        (stall_o)
+  .stallM_o       (stall_o)
 );
 
 hazard_unit i_hazard_unit(
@@ -144,9 +147,11 @@ hazard_unit i_hazard_unit(
   .rd_d_e_i     (rd_addr_DecToEx),
   .rdE_wr_ena_i (rd_port_ExToMem.valid),
   .rdM_wr_ena_i (rd_port_memToWb.valid),
+  .branch_tkn_i (next_pc_enable),
   .opE_i        (operation_DecToEx),
   .pc_en_o      (pc_en),
-  .stall_o       (stall),
+  .stall_o      (stall),
+  .flush_o      (flush),
   .forwardA_o   (forwardA),
   .forwardB_o   (forwardB)
 );
