@@ -5,11 +5,17 @@ module hazard_unit
     input  logic [4:0]      rs2D_i       ,
     input  logic [4:0]      rdE_i        ,
     input  logic [4:0]      rdM_i        ,
+    input  logic [4:0]      rs1_f_d_i    ,//load-use
+    input  logic [4:0]      rs2_f_d_i    ,//load-use
+    input  logic [4:0]      rd_d_e_i     ,//load-use
     input  logic            rdE_wr_ena_i ,
     input  logic            rdM_wr_ena_i ,
+    input  operation_e      opE_i        ,//load-use
+    output logic            pc_en_o      ,//load-use
+    output logic            stall_o      ,//load-use
     output forwarding_e     forwardA_o   ,
     output forwarding_e     forwardB_o   
-);
+    );
 
 always_comb begin : forwarding_block
    forwardA_o = NO_FRWD; 
@@ -29,8 +35,13 @@ always_comb begin : forwarding_block
    end
 end
 
-
-
-
+always_comb begin : load_use_hazard
+    pc_en_o         = 1;
+    stall_o          = 0;
+    if ((opE_i inside {LB,LH,LW,LBU,LHU}) && ((rdE_i == rs1D_i) || (rdE_i == rs2D_i))) begin
+        pc_en_o     = 0;
+        stall_o      = 1;
+    end
+end
 
 endmodule

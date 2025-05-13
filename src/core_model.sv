@@ -8,11 +8,15 @@ module core_model
   output logic  [XLEN-1:0] pc_o,
   output logic  [XLEN-1:0] instr_o,
   output logic  [     4:0] reg_addr_o,
-  output logic  [XLEN-1:0] reg_data_o
+  output logic  [XLEN-1:0] reg_data_o,
+  output logic             stall_o
 );
 
 logic  [XLEN-1:0]    pc_FtoDec       ;          
-logic  [XLEN-1:0]    instr_FtoDec    ;  
+logic  [XLEN-1:0]    instr_FtoDec    ;
+logic                pc_en           ;  
+logic                stall            ;//load-use hazard  
+logic                stall_ExToMem   ;
 
 logic  [XLEN-1:0]    pc_DecToEx        ;          
 logic  [XLEN-1:0]    instr_pc_DecToEx  ;    
@@ -57,6 +61,7 @@ fetch i_fetch(
   .clk_i            (clk_i),
   .rstn_i           (rstn_i),
   .next_pc_i        (next_pc),
+  .pc_en_i          (pc_en),
   .next_pc_enable_i (next_pc_enable),
   .pcF_o             (pc_FtoDec),
   .instrF_o          (instr_FtoDec)
@@ -85,6 +90,7 @@ decode i_decode(
 execute i_execute(
   .clk_i          (clk_i),
   .rstn_i         (rstn_i),
+  .stallE_i         (stall),
   .pcE_i           (pc_DecToEx),
   .immE_i          (imm_DecToEx),
   .instrE_i  (instr_pc_DecToEx),
@@ -103,13 +109,15 @@ execute i_execute(
   .memE_wrt_data_o (mem_wrt_data_ExToMem),
   .pcE_o           (pc_ExToMem),
   .instrE_o  (instr_ExToMem),
+  .stallE_o  (stall_ExToMem),
   .next_pc_ena_o  (next_pc_enable),
   .next_pc_o      (next_pc)
 );
 
 memory i_memory(
   .clk_i         (clk_i),
-  .rstn_i        (rstn_i),
+  .rstn_i        (rstn_i), 
+  .stallM_i        (stall_ExToMem), 
   .rs1M_i         (rs1_ExToMem),
   .pcM_i          (pc_ExToMem),
   .instrM_i (instr_ExToMem),
@@ -120,18 +128,25 @@ memory i_memory(
   .memM_wrt_data_i(mem_wrt_data_ExToMem),
   .addrM_i        (addr_i),
   .pcM_o          (pc_o),
-  .instrM_o (instr_o),
+  .instrM_o       (instr_o),
   .rdM_port_o     (rd_port_memToWb),
-  .dataM_o        (data_o) //
+  .dataM_o        (data_o), //
+  .stallM_o        (stall_o)
 );
 
-hazard_unit i_forwarding_unit(
+hazard_unit i_hazard_unit(
   .rs1D_i       (rs1D_idx),
   .rs2D_i       (rs2D_idx),
   .rdE_i        (rd_port_ExToMem.addr),
   .rdM_i        (rd_port_memToWb.addr),
+  .rs1_f_d_i    (instr_FtoDec[19:15]),
+  .rs2_f_d_i    (instr_FtoDec[24:20]),
+  .rd_d_e_i     (rd_addr_DecToEx),
   .rdE_wr_ena_i (rd_port_ExToMem.valid),
   .rdM_wr_ena_i (rd_port_memToWb.valid),
+  .opE_i        (operation_DecToEx),
+  .pc_en_o      (pc_en),
+  .stall_o       (stall),
   .forwardA_o   (forwardA),
   .forwardB_o   (forwardB)
 );

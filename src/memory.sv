@@ -3,6 +3,7 @@ module memory
 (
     input  logic             clk_i,
     input  logic             rstn_i,
+    input  logic             stallM_i,
     input  logic  [XLEN-1:0] pcM_i,
     input  logic  [XLEN-1:0] instrM_i,
     input  operation_e       operationM_i,
@@ -15,7 +16,8 @@ module memory
     output logic  [XLEN-1:0] pcM_o,
     output logic  [XLEN-1:0] instrM_o,
     output rd_port_t         rdM_port_o,
-    output logic  [XLEN-1:0] dataM_o//
+    output logic  [XLEN-1:0] dataM_o,//
+    output logic             stallM_o//
 );
 
     parameter int MEM_SIZE = 2048;
@@ -68,10 +70,12 @@ module memory
             pcM_o            <= '0;
             instrM_o         <= '0;
             rdM_port_o       <= '0;
+            stallM_o         <= '0;
         end else begin
             pcM_o           <= pcM_i;
             instrM_o        <= instrM_i;
             rdM_port_o      <= rd_port_d;
+            stallM_o        <= stallM_i;
       end
     end
 endmodule

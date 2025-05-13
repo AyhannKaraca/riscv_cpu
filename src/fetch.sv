@@ -3,6 +3,7 @@ module fetch
 (
     input  logic             clk_i,
     input  logic             rstn_i,
+    input  logic             pc_en_i,
     input  logic  [XLEN-1:0] next_pc_i,
     input  logic             next_pc_enable_i,
     output logic  [XLEN-1:0] pcF_o,
@@ -21,7 +22,7 @@ module fetch
     always_ff @(posedge clk_i) begin : pc_change_ff
       if (!rstn_i) begin
         pc_q <= 'h8000_0000;
-      end else begin
+      end else if(pc_en_i) begin
         pc_q <= pc_d;
       end
     end
