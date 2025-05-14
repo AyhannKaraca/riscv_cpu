@@ -10,7 +10,7 @@ module fetch
     output logic  [XLEN-1:0] instrF_o
 );
     parameter int MEM_SIZE = 2048;
-    logic [31:0]     imem [MEM_SIZE-1:0];
+    logic [31:0] imem [MEM_SIZE-1:0];
     initial $readmemh("./test/test.hex", imem, 0, MEM_SIZE);
 
     logic [XLEN-1:0] pc_d;

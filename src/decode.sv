@@ -42,8 +42,8 @@ module decode
       shamt_data   = 5'b0;
       rs1_data     = 32'b0;
       rs2_data     = 32'b0;
-      rf_wr_enable = 'b0;
-      mem_wr_ena_d = 'b0;
+      rf_wr_enable = 1'b0;
+      mem_wr_ena_d = 1'b0;
       operation_d  = UNKNOWN;
       case(instr_d[6:0])
         OpcodeLui: begin

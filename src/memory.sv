@@ -22,7 +22,8 @@ module memory
 
     parameter int MEM_SIZE = 2048;
     logic [31:0]     dmem [MEM_SIZE-1:0];
-    rd_port_t         rd_port_d;
+    rd_port_t        rd_port_d;
+
     assign rd_port_d.addr = rdM_port_i.addr;
     assign rd_port_d.valid = rdM_port_i.valid;
     assign dataM_o = dmem[addrM_i];
@@ -67,15 +68,15 @@ module memory
       //MEM-WB
     always_ff @(posedge clk_i) begin
         if (!rstn_i) begin
-            pcM_o            <= '0;
-            instrM_o         <= '0;
-            rdM_port_o       <= '0;
-            stallM_o         <= '0;
+            pcM_o      <= '0;
+            instrM_o   <= '0;
+            rdM_port_o <= '0;
+            stallM_o   <= '0;
         end else begin
-            pcM_o           <= pcM_i;
-            instrM_o        <= instrM_i;
-            rdM_port_o      <= rd_port_d;
-            stallM_o        <= stallM_i;
-      end
+            pcM_o      <= pcM_i;
+            instrM_o   <= instrM_i;
+            rdM_port_o <= rd_port_d;
+            stallM_o   <= stallM_i;
+        end
     end
 endmodule
