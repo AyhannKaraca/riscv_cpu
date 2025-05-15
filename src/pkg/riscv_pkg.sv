@@ -997,6 +997,11 @@ package riscv_pkg;
     localparam F7_SLLI = 7'b0000000;
     localparam F7_SRLI = 7'b0000000;
     localparam F7_SRAI = 7'b0100000;
+    localparam F7_ZBB =  7'b0110000;
+
+    localparam RS2_CLZ  =  5'b00000;
+    localparam RS2_CTZ  =  5'b00001;
+    localparam RS2_CPOP =  5'b00010;
 
     localparam F3_ADD  = 3'b000;
     localparam F3_SUB  = 3'b000;
@@ -1008,6 +1013,10 @@ package riscv_pkg;
     localparam F3_SRA  = 3'b101;
     localparam F3_OR   = 3'b110;
     localparam F3_AND  = 3'b111;
+
+    localparam F7PRS2_CLZ  = 12'b011000000000;
+    localparam F7PRS2_CTZ  = 12'b011000000001;
+    localparam F7PRS2_CPOP = 12'b011000000010;
 
     localparam F7_ADD  = 7'b0000000;
     localparam F7_SUB  = 7'b0100000;
@@ -1065,6 +1074,9 @@ package riscv_pkg;
     SRA,
     OR,
     AND,
+    CLZ,
+    CTZ,
+    CPOP,
     UNKNOWN
   } operation_e;
 

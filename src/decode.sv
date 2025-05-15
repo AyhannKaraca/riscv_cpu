@@ -160,13 +160,26 @@ module decode
                 end
               endcase
             end
-            F3_SLLI:
-              if (instr_d[31:25] == F7_SLLI) begin
+            //======================================
+            F3_SLLI: //ZBB instructions are also decoded in this case.
+            case(instr_d[31:25])
+              F7_SLLI:begin
                 rf_wr_enable = 1'b1;
                 shamt_data = instr_d[24:20];
                 rs1_data = rf[instr_d[19:15]];
                 operation_d = SLLI;
               end
+              F7_ZBB:begin
+                rf_wr_enable = 1'b1;
+                rs1_data = rf[instr_d[19:15]];
+                case(instr_d[24:20])
+                  RS2_CLZ:  operation_d = CLZ;
+                  RS2_CTZ:  operation_d = CTZ;
+                  RS2_CPOP: operation_d = CPOP;
+                endcase
+              end
+            endcase
+              //=================================
             F3_SRLI :
               if (instr_d[31:25] == F7_SRLI) begin
                 rf_wr_enable ='b1;
@@ -248,7 +261,7 @@ module decode
                 rs2_data = rf[instr_d[24:20]];
                 operation_d = AND;
               end
-          endcase
+          endcase 
       endcase
     end
 

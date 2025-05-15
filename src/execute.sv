@@ -28,6 +28,29 @@ module execute
     output logic  [XLEN-1:0]   next_pc_o
 );
 
+  function automatic logic [31:0] clz(input logic [31:0] val);
+    clz = 0;
+    for (int i = 31; i >= 0; i--) begin
+      if (val[i]) break;
+      clz++;
+    end
+  endfunction
+
+  function automatic logic [31:0] ctz(input logic [31:0] val);
+    ctz = 0;
+    for (int i = 0; i < 32; i++) begin
+      if (val[i]) break;
+      ctz++;
+   end
+  endfunction
+
+  function automatic logic [31:0] cpop(input logic [31:0] val);
+    cpop = 0;
+    for (int i = 0; i < 32; i++) begin
+      if (val[i]) cpop++;
+    end
+  endfunction
+
     logic  [XLEN-1:0] mem_wrt_addr_d;
     logic  [XLEN-1:0] mem_wrt_data_d;
     logic             memE_wrt_ena_d;
@@ -161,6 +184,15 @@ module execute
         end
         AND: begin
           rd_port_d.data = rs1E_i & rs2E_i;
+        end
+        CLZ: begin
+          rd_port_d.data = clz(rs1E_i);
+        end
+        CTZ: begin
+          rd_port_d.data = ctz(rs1E_i);
+        end
+        CPOP: begin
+          rd_port_d.data = cpop(rs1E_i);
         end
         UNKNOWN: ;
       endcase
