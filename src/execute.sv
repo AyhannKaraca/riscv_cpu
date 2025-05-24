@@ -58,8 +58,8 @@ module execute
     logic  [XLEN-1:0] next_pc_d;
     rd_port_t         rd_port_d;
 
-    assign mem_wrt_addr_d  = rs2E_i;
-    assign mem_wrt_data_d  = rs1E_i + immE_i;
+    assign mem_wrt_addr_d  = rs1E_i + immE_i;
+    assign mem_wrt_data_d  = rs2E_i;
     assign rd_port_d.addr  = rdE_addr_i;
     assign rd_port_d.valid = (stallE_i || flush_i) ? 0 : rdE_wrt_ena_i;
     assign memE_wrt_ena_d  = (stallE_i || flush_i) ? 0 : memE_wrt_ena_i;

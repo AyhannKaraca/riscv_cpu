@@ -160,7 +160,6 @@ module decode
                 end
               endcase
             end
-            //======================================
             F3_SLLI: //ZBB instructions are also decoded in this case.
             case(instr_d[31:25])
               F7_SLLI:begin
@@ -179,7 +178,6 @@ module decode
                 endcase
               end
             endcase
-              //=================================
             F3_SRLI :
               if (instr_d[31:25] == F7_SRLI) begin
                 rf_wr_enable ='b1;

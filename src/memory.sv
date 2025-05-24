@@ -32,19 +32,19 @@ module memory
         rd_port_d.data = rdM_port_i.data;
         case(operationM_i)
           LB:  begin
-            rd_port_d.data = {{24'({dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][7]})}, dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][7:0]};
+            rd_port_d.data = {{24'({dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][7]})}, dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][7:0]};
           end 
           LH  : begin
-            rd_port_d.data = {{16'({dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][7]})}, dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][15:0]};
+            rd_port_d.data = {{16'({dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][7]})}, dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][15:0]};
           end
           LW  : begin
-            rd_port_d.data = dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]];
+            rd_port_d.data = dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]];
           end 
           LBU : begin
-            rd_port_d.data = {{24'b0}, dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][7:0]};
+            rd_port_d.data = {{24'b0}, dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][7:0]};
           end
           LHU : begin
-            rd_port_d.data = {{16'b0}, dmem[rs1M_i[$clog2(MEM_SIZE)-1:0]][15:0]};
+            rd_port_d.data = {{16'b0}, dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][15:0]};
           end
           default : ;
         endcase
@@ -57,9 +57,9 @@ module memory
             end
         end else if (memM_wrt_ena_i) begin
           case(operationM_i)
-            SB :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE)-1:0]][ 7:0] <= memM_wrt_data_i[ 7:0];
-            SH :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE)-1:0]][15:0] <= memM_wrt_data_i[15:0];
-            SW :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE)-1:0]]       <= memM_wrt_data_i;
+            SB :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][ 7:0] <= memM_wrt_data_i[ 7:0];
+            SH :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]][15:0] <= memM_wrt_data_i[15:0];
+            SW :         dmem[memM_wrt_addr_i[$clog2(MEM_SIZE*4)-1:2]]       <= memM_wrt_data_i;
             default:     dmem[0] <= '0;
           endcase
         end

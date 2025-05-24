@@ -2,3 +2,4 @@ obj_dir
 dump.vcd
 model.log
 test2.hex
+mainWaveform.gtkw

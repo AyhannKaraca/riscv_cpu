@@ -145,6 +145,7 @@ hazard_unit i_hazard_unit(
   .rs1_f_d_i    (instr_FtoDec[19:15]  ),
   .rs2_f_d_i    (instr_FtoDec[24:20]  ),
   .rd_d_e_i     (rd_addr_DecToEx      ),
+  .opF_i        (instr_FtoDec[6:0]    ),
   .rdE_wr_ena_i (rd_port_ExToMem.valid),
   .rdM_wr_ena_i (rd_port_memToWb.valid),
   .branch_tkn_i (next_pc_enable       ),
