@@ -19,7 +19,6 @@ module execute
     output logic  [XLEN-1:0]   instrE_o,
     output operation_e         operationE_o,
     output rd_port_t           rdE_port_o,
-    output logic  [XLEN-1:0]   rs1E_o,
     output logic               memE_wrt_ena_o,
     output logic  [XLEN-1:0]   memE_wrt_addr_o,
     output logic  [XLEN-1:0]   memE_wrt_data_o,
@@ -208,7 +207,6 @@ module execute
         pcE_o           <= '0;
         instrE_o        <= '0;
         operationE_o    <= UNKNOWN;
-        rs1E_o          <= '0;
         stallE_o        <= '0;
         next_pc_ena_o   <= '0;
         next_pc_o       <= '0;
@@ -220,7 +218,6 @@ module execute
         pcE_o           <= pcE_i;
         instrE_o        <= instrE_i;
         operationE_o    <= operationE_i;
-        rs1E_o          <= rs1E_i;
         stallE_o        <= stallE_i;
         next_pc_ena_o   <= next_pc_ena_d; 
         next_pc_o       <= next_pc_d;

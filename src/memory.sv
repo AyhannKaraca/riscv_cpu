@@ -8,7 +8,6 @@ module memory
     input  logic  [XLEN-1:0] instrM_i,
     input  operation_e       operationM_i,
     input  rd_port_t         rdM_port_i,
-    input  logic  [XLEN-1:0] rs1M_i,
     input  logic  [XLEN-1:0] addrM_i, //
     input  logic             memM_wrt_ena_i,
     input  logic  [XLEN-1:0] memM_wrt_addr_i,

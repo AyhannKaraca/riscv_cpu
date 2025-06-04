@@ -35,7 +35,6 @@ logic  [XLEN-1:0]    imm_DecToEx         ;
 logic  [XLEN-1:0]    pc_ExToMem          ;
 logic  [XLEN-1:0]    instr_ExToMem       ;
 operation_e          operation_ExToMem   ;
-logic  [XLEN-1:0]    rs1_ExToMem         ;
 rd_port_t            rd_port_ExToMem     ;
 logic                mem_wrt_ena_ExToMem ;
 logic  [XLEN-1:0]    mem_wrt_addr_ExToMem;
@@ -104,7 +103,6 @@ execute i_execute(
   .shamt_dataE_i   (shamt_data_DecToEx  ),
   .rs1E_i          (rs1_final           ),
   .rs2E_i          (rs2_final           ),
-  .rs1E_o          (rs1_ExToMem         ),
   .rdE_port_o      (rd_port_ExToMem     ),
   .operationE_o    (operation_ExToMem   ),
   .memE_wrt_ena_o  (mem_wrt_ena_ExToMem ),
@@ -121,7 +119,6 @@ memory i_memory(
   .clk_i          (clk_i               ),
   .rstn_i         (rstn_i              ), 
   .stallM_i       (stall_ExToMem       ), 
-  .rs1M_i         (rs1_ExToMem         ),
   .pcM_i          (pc_ExToMem          ),
   .instrM_i       (instr_ExToMem       ),
   .operationM_i   (operation_ExToMem   ),
