@@ -4,6 +4,7 @@ module execute
     input  logic               clk_i,
     input  logic               rstn_i,
     input  logic               flush_i,
+    input  logic               flushD_E_i,//db
     input  logic               stallE_i,
     input  logic  [XLEN-1:0]   pcE_i,
     input  logic  [XLEN-1:0]   instrE_i,
@@ -23,6 +24,8 @@ module execute
     output logic  [XLEN-1:0]   memE_wrt_addr_o,
     output logic  [XLEN-1:0]   memE_wrt_data_o,
     output logic               stallE_o,
+    output logic               flushD_E_o, //db
+    output logic               flushE_o, //db
     output logic               next_pc_ena_o,
     output logic  [XLEN-1:0]   next_pc_o
 );
@@ -60,8 +63,8 @@ module execute
     assign mem_wrt_addr_d  = rs1E_i + immE_i;
     assign mem_wrt_data_d  = rs2E_i;
     assign rd_port_d.addr  = rdE_addr_i;
-    assign rd_port_d.valid = (stallE_i || flush_i) ? 0 : rdE_wrt_ena_i;
-    assign memE_wrt_ena_d  = (stallE_i || flush_i) ? 0 : memE_wrt_ena_i;
+    assign rd_port_d.valid = (flush_i) ? 0 : rdE_wrt_ena_i;
+    assign memE_wrt_ena_d  = (flush_i) ? 0 : memE_wrt_ena_i;
 
     always_comb begin : execute_block
       next_pc_ena_d  = 0;
@@ -76,49 +79,49 @@ module execute
           rd_port_d.data =  immE_i + pcE_i;
         end
         JAL: begin
-          if(!stallE_i && !flush_i)begin
+          if(!flush_i)begin
             next_pc_ena_d = 1'b1;
             next_pc_d = immE_i + pcE_i;
             rd_port_d.data = pcE_i + 4;
           end
         end
         JALR: begin
-          if(!stallE_i && !flush_i)begin
+          if(!flush_i)begin
             next_pc_ena_d = 1'b1;
             next_pc_d = immE_i + rs1E_i;
             rd_port_d.data = pcE_i + 4;
           end
         end
         BEQ:
-          if ((rs1E_i == rs2E_i) && (!stallE_i && !flush_i)) begin
+          if ((rs1E_i == rs2E_i) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
           end
         BNE:
-          if ((rs1E_i != rs2E_i) && (!stallE_i && !flush_i)) begin
+          if ((rs1E_i != rs2E_i) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
           end
         BLT:
-          if (($signed(rs1E_i) < $signed(rs2E_i)) && (!stallE_i && !flush_i)) begin
+          if (($signed(rs1E_i) < $signed(rs2E_i)) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
           end
         BGE:
-          if (($signed(rs1E_i) >= $signed(rs2E_i)) && (!stallE_i && !flush_i)) begin
+          if (($signed(rs1E_i) >= $signed(rs2E_i)) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
           end
         BLTU: 
-          if ((rs1E_i < rs2E_i) && (!stallE_i && !flush_i)) begin
+          if ((rs1E_i < rs2E_i) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
           end
         BGEU: 
-          if ((rs1E_i >= rs2E_i) && (!stallE_i && !flush_i)) begin
+          if ((rs1E_i >= rs2E_i) && (!flush_i)) begin
             next_pc_d = immE_i + pcE_i;
             next_pc_ena_d = 1'b1;
-          end 
+          end  
         LB  : ;
         LH  : ;
         LW  : ;
@@ -208,8 +211,10 @@ module execute
         instrE_o        <= '0;
         operationE_o    <= UNKNOWN;
         stallE_o        <= '0;
+        flushD_E_o      <= '0;
         next_pc_ena_o   <= '0;
         next_pc_o       <= '0;
+        
       end else begin
         memE_wrt_ena_o  <= memE_wrt_ena_d;
         memE_wrt_data_o <= mem_wrt_data_d;
@@ -219,6 +224,8 @@ module execute
         instrE_o        <= instrE_i;
         operationE_o    <= operationE_i;
         stallE_o        <= stallE_i;
+        flushD_E_o      <= flushD_E_i;
+        flushE_o        <= flush_i;
         next_pc_ena_o   <= next_pc_ena_d; 
         next_pc_o       <= next_pc_d;
       end

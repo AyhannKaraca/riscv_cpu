@@ -4,6 +4,7 @@ module decode
     input  logic             clk_i,
     input  logic             rstn_i,
     input  logic             flush_i,
+    input  logic             stallD_i,
     input  logic  [XLEN-1:0] pcD_i,
     input  logic  [XLEN-1:0] instrD_i,
     input  rd_port_t         rdWB_port_i,
@@ -17,6 +18,8 @@ module decode
     output logic  [     4:0] rdD_addr_o,
     output logic             rdD_wrt_ena_o,
     output logic             memD_wr_ena_o,
+    output logic             stallD_o,
+    output logic             flushD_o,//db
     output logic  [     4:0] shamt_dataD_o,
     output logic  [XLEN-1:0] immD_o
 );
@@ -32,7 +35,7 @@ module decode
     logic [     4:0] rs2_idx_d;
     logic [XLEN-1:0] instr_d;
 
-    assign instr_d = (flush_i) ? 32'h00000013 :  instrD_i;//nop
+    assign instr_d = (flush_i || stallD_i) ? 32'h00000013 :  instrD_i;//nop
     assign rs1_idx_d = instr_d[19:15];
     assign rs2_idx_d = instr_d[24:20];
     
@@ -287,6 +290,8 @@ module decode
             rdD_wrt_ena_o    <= 'b0;
             rs1D_idx_o       <= 'b0;
             rs2D_idx_o       <= 'b0;
+            stallD_o         <= 'b0;
+            flushD_o         <= 'b0;
         end else begin
             pcD_o            <= pcD_i;
             instrD_o         <= instr_d;
@@ -300,6 +305,8 @@ module decode
             rdD_wrt_ena_o    <= rf_wr_enable;
             rs1D_idx_o       <= rs1_idx_d;
             rs2D_idx_o       <= rs2_idx_d;
+            stallD_o         <= stallD_i;
+            flushD_o         <= flush_i;
         end
     end
 endmodule

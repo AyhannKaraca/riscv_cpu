@@ -9,7 +9,11 @@ module core_model
   output logic  [XLEN-1:0] instr_o,
   output logic  [     4:0] reg_addr_o,
   output logic  [XLEN-1:0] reg_data_o,
-  output logic             stall_o
+  output logic  [XLEN-1:0] mem_data_o,
+  output logic  [XLEN-1:0] mem_addr_o,
+  output logic             stall_o,
+  output logic             flushD_o,
+  output logic             flushE_o
 );
 
 logic  [XLEN-1:0]    pc_FtoDec           ;          
@@ -17,6 +21,10 @@ logic  [XLEN-1:0]    instr_FtoDec        ;
 logic                pc_en               ;  
 logic                stall               ;//load-use hazard  
 logic                stall_ExToMem       ;
+logic                stall_DecToEx       ;
+logic                flushD_DecToEx      ;
+logic                flushD_ExToMem      ;
+logic                flushE_ExToMem      ;
 logic                flush               ;//control hazard
 
 logic  [XLEN-1:0]    pc_DecToEx          ;          
@@ -71,6 +79,7 @@ decode i_decode(
   .clk_i          (clk_i             ),
   .rstn_i         (rstn_i            ),
   .flush_i        (flush             ),
+  .stallD_i       (stall             ),
   .pcD_i          (pc_FtoDec         ),
   .instrD_i       (instr_FtoDec      ),
   .rdWB_port_i    (rd_port_memToWb   ),
@@ -84,6 +93,8 @@ decode i_decode(
   .rdD_addr_o     (rd_addr_DecToEx   ), 
   .rdD_wrt_ena_o  (rd_wrt_ena_DecToEx),
   .memD_wr_ena_o  (mem_wr_ena_DecToEx),
+  .stallD_o       (stall_DecToEx     ),
+  .flushD_o       (flushD_DecToEx    ),
   .shamt_dataD_o  (shamt_data_DecToEx),
   .immD_o         (imm_DecToEx       )
 );
@@ -92,7 +103,8 @@ execute i_execute(
   .clk_i           (clk_i               ),
   .rstn_i          (rstn_i              ),
   .flush_i         (flush               ),
-  .stallE_i        (stall               ),
+  .flushD_E_i      (flushD_DecToEx      ),
+  .stallE_i        (stall_DecToEx       ),
   .pcE_i           (pc_DecToEx          ),
   .immE_i          (imm_DecToEx         ),
   .instrE_i        (instr_pc_DecToEx    ),
@@ -111,6 +123,8 @@ execute i_execute(
   .pcE_o           (pc_ExToMem          ),
   .instrE_o        (instr_ExToMem       ),
   .stallE_o        (stall_ExToMem       ),
+  .flushD_E_o      (flushD_ExToMem      ),
+  .flushE_o        (flushE_ExToMem      ),
   .next_pc_ena_o   (next_pc_enable      ),
   .next_pc_o       (next_pc             )
 );
@@ -119,6 +133,8 @@ memory i_memory(
   .clk_i          (clk_i               ),
   .rstn_i         (rstn_i              ), 
   .stallM_i       (stall_ExToMem       ), 
+  .flushD_E_M_i       (flushD_ExToMem      ), 
+  .flushE_M_i       (flushE_ExToMem       ), 
   .pcM_i          (pc_ExToMem          ),
   .instrM_i       (instr_ExToMem       ),
   .operationM_i   (operation_ExToMem   ),
@@ -129,9 +145,13 @@ memory i_memory(
   .addrM_i        (addr_i              ),
   .pcM_o          (pc_o                ),
   .instrM_o       (instr_o             ),
+  .memM_wrt_addr_o(mem_addr_o          ),
+  .memM_wrt_data_o(mem_data_o          ),
   .rdM_port_o     (rd_port_memToWb     ),
   .dataM_o        (data_o              ), //
-  .stallM_o       (stall_o             )
+  .stallM_o       (stall_o             ),
+  .flushD_E_M_o       (    flushD_o         ),
+  .flushE_M_o       (    flushE_o         )
 );
 
 hazard_unit i_hazard_unit(

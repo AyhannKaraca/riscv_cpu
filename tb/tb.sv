@@ -5,7 +5,11 @@ module tb ();
     logic [riscv_pkg::XLEN-1:0] instr;
     logic [                4:0] reg_addr;
     logic [riscv_pkg::XLEN-1:0] reg_data;
+    logic [riscv_pkg::XLEN-1:0] mem_data;
+    logic [riscv_pkg::XLEN-1:0] mem_addr;
     logic stall;
+    logic flushD;
+    logic flushE;
     logic clk;
     logic rstn;
 
@@ -18,8 +22,11 @@ module tb ();
         .instr_o(instr),
         .reg_addr_o(reg_addr),
         .reg_data_o(reg_data),
-        .stall_o(stall)
-
+        .mem_data_o(mem_data),
+        .mem_addr_o(mem_addr),
+        .stall_o(stall),
+        .flushD_o(flushD),
+        .flushE_o(flushE)
     );
     integer file_pointer;
     initial begin
@@ -27,25 +34,45 @@ module tb ();
         #4
         forever begin
             if (rstn) begin
-                if (reg_addr == 0) begin
-                    if(stall) begin
-                        $fdisplay(file_pointer, "0x%8h (0x%8h) --STALL--", pc, instr);
+                if(instr[6:0] == 7'b0100011) begin
+                    case(instr[14:12])
+                        3'b000: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[7:0]);
+                        3'b001: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[15:0]);
+                        3'b010: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%8h", pc, instr, mem_addr, mem_data);
+                    endcase
+                end else if(instr[6:0] == 7'b0000011) begin
+                    if(reg_addr>9)begin
+                        $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
                     end else begin
-                        $fdisplay(file_pointer, "0x%8h (0x%8h)", pc, instr);
-                    end   
+                        $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
+                    end       
                 end else begin
-                    if (reg_addr>9) begin
+                    if (reg_addr == 0) begin
                         if(stall) begin
-                            $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h --STALL--", pc, instr, reg_addr, reg_data);
-                        end else begin
-                            $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h", pc, instr, reg_addr, reg_data);
-                        end
+                            $fdisplay(file_pointer, "0x%8h (0x%8h) --STALL--", pc, instr);
+                        end else if(flushD || flushE)
+                             $fdisplay(file_pointer, "0x%8h (0x%8h) --FLUSH--", pc, instr);
+                        else begin
+                            $fdisplay(file_pointer, "0x%8h (0x%8h)", pc, instr);
+                        end   
                     end else begin
-                        if(stall)begin
-                            $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h --STALL--", pc, instr, reg_addr, reg_data);
+                        if (reg_addr>9) begin
+                            if(stall) begin
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h --STALL--", pc, instr, reg_addr, reg_data);
+                            end else if(flushD || flushE)
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h --FLUSH--", pc, instr, reg_addr, reg_data);
+                            else begin
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h", pc, instr, reg_addr, reg_data);
+                            end
                         end else begin
-                            $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h", pc, instr, reg_addr, reg_data);
-                        end 
+                            if(stall)begin
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h --STALL--", pc, instr, reg_addr, reg_data);
+                            end else if(flushD || flushE)
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h --FLUSH--", pc, instr, reg_addr, reg_data);
+                            else begin
+                                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h", pc, instr, reg_addr, reg_data);
+                            end 
+                        end
                     end
                 end
                 #2;
@@ -62,11 +89,7 @@ module tb ();
         rstn = 0;
         #4;
         rstn = 1;
-        #4000;//4000;
-        for (int i=0; i<10; i++) begin
-            addr = i*4;
-            $display("data @ mem[0x%8h] = %8h", i, data);
-        end
+        #1000;//4000;
         $finish;
     end
 
