@@ -10,7 +10,6 @@ module memory
     input  logic  [XLEN-1:0] instrM_i,
     input  operation_e       operationM_i,
     input  rd_port_t         rdM_port_i,
-    input  logic  [XLEN-1:0] addrM_i, //
     input  logic             memM_wrt_ena_i,
     input  logic  [XLEN-1:0] memM_wrt_addr_i,
     input  logic  [XLEN-1:0] memM_wrt_data_i,
@@ -19,7 +18,6 @@ module memory
     output logic  [XLEN-1:0] memM_wrt_addr_o,
     output logic  [XLEN-1:0] memM_wrt_data_o,
     output rd_port_t         rdM_port_o,
-    output logic  [XLEN-1:0] dataM_o,//
     output logic             stallM_o,//
     output logic             flushD_E_M_o,//
     output logic             flushE_M_o//
@@ -31,7 +29,6 @@ module memory
 
     assign rd_port_d.addr = rdM_port_i.addr;
     assign rd_port_d.valid = rdM_port_i.valid;
-    assign dataM_o = dmem[addrM_i];
 
     always_comb begin : load_execute
         rd_port_d.data = rdM_port_i.data;
@@ -58,7 +55,7 @@ module memory
     always_ff @(posedge clk_i) begin
         if (!rstn_i) begin
             for(int i = 0; i<MEM_SIZE; ++i)begin
-                dmem[i] = '0; //There is an issue about verilator 
+                dmem[i] <= '0;  
             end
         end else if (memM_wrt_ena_i) begin
           case(operationM_i)

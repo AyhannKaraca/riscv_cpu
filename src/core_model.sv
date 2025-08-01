@@ -3,8 +3,6 @@ module core_model
 (
   input  logic clk_i,
   input  logic rstn_i,
-  input  logic  [XLEN-1:0] addr_i,
-  output logic  [XLEN-1:0] data_o,
   output logic  [XLEN-1:0] pc_o,
   output logic  [XLEN-1:0] instr_o,
   output logic  [     4:0] reg_addr_o,
@@ -133,8 +131,8 @@ memory i_memory(
   .clk_i          (clk_i               ),
   .rstn_i         (rstn_i              ), 
   .stallM_i       (stall_ExToMem       ), 
-  .flushD_E_M_i       (flushD_ExToMem      ), 
-  .flushE_M_i       (flushE_ExToMem       ), 
+  .flushD_E_M_i   (flushD_ExToMem      ), 
+  .flushE_M_i     (flushE_ExToMem      ), 
   .pcM_i          (pc_ExToMem          ),
   .instrM_i       (instr_ExToMem       ),
   .operationM_i   (operation_ExToMem   ),
@@ -142,16 +140,14 @@ memory i_memory(
   .memM_wrt_ena_i (mem_wrt_ena_ExToMem ),
   .memM_wrt_addr_i(mem_wrt_addr_ExToMem),
   .memM_wrt_data_i(mem_wrt_data_ExToMem),
-  .addrM_i        (addr_i              ),
   .pcM_o          (pc_o                ),
   .instrM_o       (instr_o             ),
   .memM_wrt_addr_o(mem_addr_o          ),
   .memM_wrt_data_o(mem_data_o          ),
   .rdM_port_o     (rd_port_memToWb     ),
-  .dataM_o        (data_o              ), //
   .stallM_o       (stall_o             ),
-  .flushD_E_M_o       (    flushD_o         ),
-  .flushE_M_o       (    flushE_o         )
+  .flushD_E_M_o   (flushD_o            ),
+  .flushE_M_o     (flushE_o            )
 );
 
 hazard_unit i_hazard_unit(

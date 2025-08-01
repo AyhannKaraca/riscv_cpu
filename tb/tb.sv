@@ -1,6 +1,4 @@
 module tb ();
-    logic [riscv_pkg::XLEN-1:0] addr;
-    logic [riscv_pkg::XLEN-1:0] data;
     logic [riscv_pkg::XLEN-1:0] pc;
     logic [riscv_pkg::XLEN-1:0] instr;
     logic [                4:0] reg_addr;
@@ -16,8 +14,6 @@ module tb ();
     core_model i_core_model(
         .clk_i(clk),
         .rstn_i(rstn),
-        .addr_i(addr),
-        .data_o(data),
         .pc_o(pc),
         .instr_o(instr),
         .reg_addr_o(reg_addr),

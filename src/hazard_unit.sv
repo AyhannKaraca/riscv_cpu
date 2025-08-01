@@ -40,10 +40,10 @@ end
 
 always_comb begin : load_use_hazard
     pc_en_o         = 1;
-    stallH_o         = 0;
-    if ((opE_i inside {LB,LH,LW,LBU,LHU}) && (opF_i != 7'b0000011 && opF_i != 7'b0100011) && ((rd_d_e_i == rs1_f_d_i) || (rd_d_e_i == rs2_f_d_i))) begin
+    stallH_o        = 0;
+    if ((opE_i inside {LB,LH,LW,LBU,LHU}) && (opF_i != OpcodeLoad && opF_i != OpcodeStore) && ((rd_d_e_i == rs1_f_d_i) || (rd_d_e_i == rs2_f_d_i))) begin
         pc_en_o     = 0;
-        stallH_o     = 1;
+        stallH_o    = 1;
     end
 end
 
