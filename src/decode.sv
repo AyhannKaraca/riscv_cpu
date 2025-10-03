@@ -3,81 +3,85 @@ module decode
 (
     input  logic             clk_i,
     input  logic             rstn_i,
-    input  logic             flush_i,
-    input  logic             stallD_i,
+
+    //TB_UPDATE
+    input  logic             tb_update_i,
+    output logic             tb_update_o,
+
     input  logic  [XLEN-1:0] pcD_i,
     input  logic  [XLEN-1:0] instrD_i,
-    input  rd_port_t         rdWB_port_i,
+    //WB PORTS
+    input  logic  [XLEN-1:0] rdD_data_i,     
+    input  logic  [4:0     ] rdD_addr_i,     
+    input  logic             rdD_wr_ena_i, 
+    //LOAD-USE STALL
+    input  logic             flushE_i,
+
     output logic  [XLEN-1:0] pcD_o,
     output logic  [XLEN-1:0] instrD_o,
-    output operation_e       operationD_o,
-    output logic  [XLEN-1:0] rs1D_o,
-    output logic  [XLEN-1:0] rs2D_o,
-    output logic  [     4:0] rs1D_idx_o,
-    output logic  [     4:0] rs2D_idx_o,
+    //FOR HAZARD DET
+    output logic  [     4:0] rs1D_addr_o,
+    output logic  [     4:0] rs2D_addr_o,
+
+    output alu_ctrl_e        operationD_o,
+    output logic  [XLEN-1:0] rs1D_data_o,
+    output logic  [XLEN-1:0] rs2D_data_o,
+    //WB
     output logic  [     4:0] rdD_addr_o,
-    output logic             rdD_wrt_ena_o,
+    output logic             rdD_wr_ena_o,
+
     output logic             memD_wr_ena_o,
-    output logic             stallD_o,
-    output logic             flushD_o,//db
-    output logic  [     4:0] shamt_dataD_o,
+    output logic  [     4:0] shamtD_data_o,
     output logic  [XLEN-1:0] immD_o
 );
     logic [XLEN-1:0] rf   [31:0];
-    operation_e      operation_d;
+    alu_ctrl_e       operation_d;
     logic [XLEN-1:0] rs1_data;      // source register 1 data
     logic [XLEN-1:0] rs2_data;      // source register 2 data
-    logic [XLEN-1:0] imm_data;      // immediate data
-    logic [     4:0] shamt_data;
-    logic            rf_wr_enable;  // register file write enable
+    logic            rd_wr_enable;  // register file write enable
     logic            mem_wr_ena_d;
-    logic [     4:0] rs1_idx_d;
-    logic [     4:0] rs2_idx_d;
-    logic [XLEN-1:0] instr_d;
-
-    assign instr_d = (flush_i || stallD_i) ? 32'h00000013 :  instrD_i;//nop
-    assign rs1_idx_d = instr_d[19:15];
-    assign rs2_idx_d = instr_d[24:20];
-    
+    logic [     4:0] shamt_data;
+    logic [XLEN-1:0] imm_data;      // immediate data
 
     always_comb begin : decode_block
       imm_data     = 32'b0;
       shamt_data   = 5'b0;
       rs1_data     = 32'b0;
       rs2_data     = 32'b0;
-      rf_wr_enable = 1'b0;
+      rd_wr_enable = 1'b0;
       mem_wr_ena_d = 1'b0;
       operation_d  = UNKNOWN;
-      case(instr_d[6:0])
+      case(instrD_i[6:0])
         OpcodeLui: begin
-            rf_wr_enable ='b1;
+            rd_wr_enable ='b1;
             operation_d = LUI;
-            imm_data = {instr_d[31:12] , 12'b0};
+            imm_data = {instrD_i[31:12] , 12'b0};
         end
         OpcodeAuipc: begin
-            rf_wr_enable ='b1;
+            rd_wr_enable ='b1;
             operation_d = AUIPC;
-            imm_data = {instr_d[31:12] , 12'b0};
+            imm_data = {instrD_i[31:12] , 12'b0};
         end
         OpcodeJal: begin
-            rf_wr_enable ='b1;
+            rd_wr_enable ='b1;
             operation_d = JAL;
-            imm_data = {{12'(signed'(instr_d[31]))}, instr_d[19:12], instr_d[20], instr_d[30:21], 1'b0};
+            imm_data = {{12'(signed'(instrD_i[31]))}, instrD_i[19:12], instrD_i[20], instrD_i[30:21], 1'b0};
         end
-        OpcodeJalr: 
-            if (instr_d[14:12] == F3_JALR) begin
-              rf_wr_enable ='b1;
+        OpcodeJalr: begin 
+            if (instrD_i[14:12] == F3_JALR) begin
+              rd_wr_enable ='b1;
               operation_d = JALR;
-              rs1_data = rf[instr_d[19:15]];
-              imm_data = {{21'(signed'(instr_d[31]))}, instr_d[30:20]};
+              rs1_data = rf[instrD_i[19:15]];
+              imm_data = {{21'(signed'(instrD_i[31]))}, instrD_i[30:20]};
             end
+        end
         OpcodeBranch: begin
-          if (instr_d[14:12] inside {F3_BEQ, F3_BNE, F3_BLT, F3_BGE, F3_BLTU, F3_BGEU}) begin
-            rs1_data = rf[instr_d[19:15]];
-            rs2_data = rf[instr_d[24:20]];
-            imm_data = {{19'(signed'(instr_d[31]))}, instr_d[31], instr_d[7], instr_d[30:25], instr_d[11:8], 1'b0};
+          if (instrD_i[14:12] inside {F3_BEQ, F3_BNE, F3_BLT, F3_BGE, F3_BLTU, F3_BGEU}) begin
+            rs1_data = rf[instrD_i[19:15]];
+            rs2_data = rf[instrD_i[24:20]];
+            imm_data = {{19'(signed'(instrD_i[31]))}, instrD_i[31], instrD_i[7], instrD_i[30:25], instrD_i[11:8], 1'b0};
           end
-          case (instr_d[14:12])
+          case (instrD_i[14:12])
             F3_BEQ:     operation_d = BEQ;
             F3_BNE:     operation_d = BNE;
             F3_BLT:     operation_d = BLT;
@@ -87,36 +91,36 @@ module decode
           endcase
         end
         OpcodeLoad: begin
-          rs1_data = rf[instr_d[19:15]];
-          imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:20]};
-          case (instr_d[14:12])
+          rs1_data = rf[instrD_i[19:15]];
+          imm_data = {{20'(signed'(instrD_i[31]))}, instrD_i[31:20]};
+          case (instrD_i[14:12])
             F3_LB: begin
                 operation_d = LB;
-                rf_wr_enable ='b1;
+                rd_wr_enable ='b1;
             end
             F3_LH: begin
                 operation_d = LH;
-                rf_wr_enable ='b1;
+                rd_wr_enable ='b1;
             end
             F3_LW: begin
                 operation_d = LW;
-                rf_wr_enable ='b1;
+                rd_wr_enable ='b1;
             end
             F3_LBU: begin
                 operation_d = LBU;
-                rf_wr_enable ='b1;
+                rd_wr_enable ='b1;
             end
             F3_LHU: begin
                 operation_d = LHU;
-                rf_wr_enable ='b1;
+                rd_wr_enable ='b1;
             end
           endcase
         end
         OpcodeStore: begin
-          rs1_data = rf[instr_d[19:15]];
-          rs2_data = rf[instr_d[24:20]];
-          imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:25], instr_d[11:7]};
-          case (instr_d[14:12])
+          rs1_data = rf[instrD_i[19:15]];
+          rs2_data = rf[instrD_i[24:20]];
+          imm_data = {{20'(signed'(instrD_i[31]))}, instrD_i[31:25], instrD_i[11:7]};
+          case (instrD_i[14:12])
             F3_SB: begin
               operation_d = SB;
               mem_wr_ena_d = 'b1;
@@ -131,135 +135,128 @@ module decode
             end
           endcase
         end
-        OpcodeOpImm:
-          case(instr_d[14:12])
+        OpcodeOpImm: begin
+          case(instrD_i[14:12])
             F3_ADDI, F3_SLTI, F3_SLTIU, F3_XORI, F3_ORI, F3_ANDI: begin
-              rs1_data = rf[instr_d[19:15]];
-              imm_data = {{20'(signed'(instr_d[31]))}, instr_d[31:20]};
-              case (instr_d[14:12])
+              rs1_data = rf[instrD_i[19:15]];
+              imm_data = {{20'(signed'(instrD_i[31]))}, instrD_i[31:20]};
+              case (instrD_i[14:12])
                 F3_ADDI: begin
                     operation_d = ADDI;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
                 F3_SLTI: begin
                     operation_d = SLTI;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
                 F3_SLTIU: begin
                     operation_d = SLTIU;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
                 F3_XORI: begin
                     operation_d = XORI;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
                 F3_ORI: begin
                     operation_d = ORI;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
                 F3_ANDI: begin
                     operation_d = ANDI;
-                    rf_wr_enable ='b1;
+                    rd_wr_enable ='b1;
                 end
               endcase
             end
-            F3_SLLI: //ZBB instructions are also decoded in this case.
-            case(instr_d[31:25])
-              F7_SLLI:begin
-                rf_wr_enable = 1'b1;
-                shamt_data = instr_d[24:20];
-                rs1_data = rf[instr_d[19:15]];
-                operation_d = SLLI;
-              end
-              F7_ZBB:begin
-                rf_wr_enable = 1'b1;
-                rs1_data = rf[instr_d[19:15]];
-                case(instr_d[24:20])
-                  RS2_CLZ:  operation_d = CLZ;
-                  RS2_CTZ:  operation_d = CTZ;
-                  RS2_CPOP: operation_d = CPOP;
-                endcase
-              end
-            endcase
+            F3_SLLI: begin
+              case(instrD_i[31:25])
+                F7_SLLI:begin
+                  rd_wr_enable = 1'b1;
+                  shamt_data = instrD_i[24:20];
+                  rs1_data = rf[instrD_i[19:15]];
+                  operation_d = SLLI;
+                end
+              endcase
+            end
             F3_SRLI :
-              if (instr_d[31:25] == F7_SRLI) begin
-                rf_wr_enable ='b1;
-                shamt_data = instr_d[24:20];
-                rs1_data = rf[instr_d[19:15]];
+              if (instrD_i[31:25] == F7_SRLI) begin
+                rd_wr_enable ='b1;
+                shamt_data = instrD_i[24:20];
+                rs1_data = rf[instrD_i[19:15]];
                 operation_d = SRLI;
-              end else if (instr_d[31:25] == F7_SRAI) begin
-                rf_wr_enable ='b1;
-                shamt_data = instr_d[24:20];
-                rs1_data = rf[instr_d[19:15]];
+              end else if (instrD_i[31:25] == F7_SRAI) begin
+                rd_wr_enable ='b1;
+                shamt_data = instrD_i[24:20];
+                rs1_data = rf[instrD_i[19:15]];
                 operation_d = SRAI;
               end
           endcase
+        end
         OpcodeOp:
-          case(instr_d[14:12])
+          case(instrD_i[14:12])
             F3_ADD:
-              if (instr_d[31:25] == F7_ADD) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_ADD) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = ADD;
-              end else if (instr_d[31:25] == F7_SUB) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              end else if (instrD_i[31:25] == F7_SUB) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SUB;
               end
             F3_SLL :
-              if (instr_d[31:25] == F7_SLL) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_SLL) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SLL;
               end
             F3_SLT :
-              if (instr_d[31:25] == F7_SLT) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_SLT) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SLT;
               end
             F3_SLTU:
-              if (instr_d[31:25] == F7_SLTU) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_SLTU) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SLTU;
               end
             F3_XOR :
-              if (instr_d[31:25] == F7_XOR) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_XOR) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = XOR;
               end
             F3_SRL :
-            if (instr_d[31:25] == F7_SRL) begin
-              rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_SRL) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SRL;
-            end else if (instr_d[31:25] == F7_SRA) begin
-              rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              end else if (instrD_i[31:25] == F7_SRA) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = SRA;
               end
             F3_OR  :
-              if (instr_d[31:25] == F7_OR) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_OR) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = OR;
               end
             F3_AND :
-              if (instr_d[31:25] == F7_AND) begin
-                rf_wr_enable ='b1;
-                rs1_data = rf[instr_d[19:15]];
-                rs2_data = rf[instr_d[24:20]];
+              if (instrD_i[31:25] == F7_AND) begin
+                rd_wr_enable ='b1;
+                rs1_data = rf[instrD_i[19:15]];
+                rs2_data = rf[instrD_i[24:20]];
                 operation_d = AND;
               end
           endcase 
@@ -271,42 +268,48 @@ module decode
         for (int i=0; i<32; ++i) begin
           rf[i] <= '0;
         end
-      end else if (rdWB_port_i.valid && rdWB_port_i.addr != '0) begin
-        rf[rdWB_port_i.addr] <= rdWB_port_i.data;
+      end else if (rdD_wr_ena_i && rdD_addr_i != '0) begin
+        rf[rdD_addr_i] <= rdD_data_i;
       end
     end
 
     //ID-EX
     always_ff @(posedge clk_i) begin
         if (!rstn_i) begin
-            pcD_o            <= 'b0;
-            instrD_o         <= 'b0;
-            rs1D_o           <= 'b0;
-            rs2D_o           <= 'b0;
-            immD_o           <= 'b0;
-            memD_wr_ena_o    <= 'b0;
-            operationD_o     <= UNKNOWN;
-            shamt_dataD_o    <= 'b0;
-            rdD_wrt_ena_o    <= 'b0;
-            rs1D_idx_o       <= 'b0;
-            rs2D_idx_o       <= 'b0;
-            stallD_o         <= 'b0;
-            flushD_o         <= 'b0;
+          pcD_o            <= 'h8000_0000;;
+          instrD_o         <= 'h00000013;;
+          operationD_o     <= UNKNOWN;
+          rs1D_data_o      <= 'b0;
+          rs2D_data_o      <= 'b0;
+          rdD_addr_o       <= 'b0;
+          rdD_wr_ena_o     <= 'b0;
+          memD_wr_ena_o    <= 'b0;
+          shamtD_data_o    <= 'b0;
+          immD_o           <= 'b0;
+          rs1D_addr_o      <= '0;
+          rs2D_addr_o      <= '0;
+          tb_update_o      <= 0;
+        end else if(!flushE_i) begin
+          pcD_o            <= pcD_i;
+          instrD_o         <= instrD_i;
+          operationD_o     <= operation_d;
+          rs1D_data_o      <= rs1_data;
+          rs2D_data_o      <= rs2_data;
+          rdD_addr_o       <= instrD_i[11:7];
+          rdD_wr_ena_o     <= rd_wr_enable;
+          memD_wr_ena_o    <= mem_wr_ena_d;
+          shamtD_data_o    <= shamt_data;
+          immD_o           <= imm_data;
+          rs1D_addr_o      <= instrD_i[19:15];
+          rs2D_addr_o      <= instrD_i[24:20];
+          tb_update_o      <= tb_update_i;
         end else begin
-            pcD_o            <= pcD_i;
-            instrD_o         <= instr_d;
-            rs1D_o           <= rs1_data;
-            rs2D_o           <= rs2_data;
-            immD_o           <= imm_data;
-            memD_wr_ena_o    <= mem_wr_ena_d;
-            operationD_o     <= operation_d;
-            shamt_dataD_o    <= shamt_data;
-            rdD_addr_o       <= instr_d[11:7];
-            rdD_wrt_ena_o    <= rf_wr_enable;
-            rs1D_idx_o       <= rs1_idx_d;
-            rs2D_idx_o       <= rs2_idx_d;
-            stallD_o         <= stallD_i;
-            flushD_o         <= flush_i;
+          instrD_o         <= 'h00000013;
+          rdD_wr_ena_o     <= '0;
+          memD_wr_ena_o    <= '0;
+          operationD_o     <= UNKNOWN;
+          rdD_addr_o       <= '0;
+          tb_update_o      <=  0;
         end
     end
 endmodule

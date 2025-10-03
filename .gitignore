@@ -1,5 +1,4 @@
 obj_dir
+output_log
 dump.vcd
 model.log
-test2.hex
-mainWaveform.gtkw

@@ -1,28 +1,9 @@
-/* Copyright 2018 ETH Zurich and University of Bologna.
- * Copyright and related rights are licensed under the Solderpad Hardware
- * License, Version 0.51 (the “License”); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
- * or agreed to in writing, software, hardware and materials distributed under
- * this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
- * CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * File:   riscv_pkg.sv
- * Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
- * Date:   30.6.2017
- *
- * Description: Common RISC-V definitions.
- */
+`timescale 1ns / 1ps
+
 
 package riscv_pkg;
 
-  // ----------------------
-  // Import cva6 config from cva6_config_pkg
-  // ----------------------
-  // FIXME stop using them from CoreV-Verif and HPDCache
-  // Then remove them from this package
-  localparam XLEN = 32; // it was cva6_config_pkg::CVA6ConfigXlen;
+  localparam XLEN = 32; 
   localparam PLEN = (XLEN == 32) ? 34 : 56;
 
   // --------------------
@@ -997,11 +978,6 @@ package riscv_pkg;
     localparam F7_SLLI = 7'b0000000;
     localparam F7_SRLI = 7'b0000000;
     localparam F7_SRAI = 7'b0100000;
-    localparam F7_ZBB =  7'b0110000;
-
-    localparam RS2_CLZ  =  5'b00000;
-    localparam RS2_CTZ  =  5'b00001;
-    localparam RS2_CPOP =  5'b00010;
 
     localparam F3_ADD  = 3'b000;
     localparam F3_SUB  = 3'b000;
@@ -1014,10 +990,6 @@ package riscv_pkg;
     localparam F3_OR   = 3'b110;
     localparam F3_AND  = 3'b111;
 
-    localparam F7PRS2_CLZ  = 12'b011000000000;
-    localparam F7PRS2_CTZ  = 12'b011000000001;
-    localparam F7PRS2_CPOP = 12'b011000000010;
-
     localparam F7_ADD  = 7'b0000000;
     localparam F7_SUB  = 7'b0100000;
     localparam F7_SLL  = 7'b0000000;
@@ -1028,64 +1000,6 @@ package riscv_pkg;
     localparam F7_SRA  = 7'b0100000;
     localparam F7_OR   = 7'b0000000;
     localparam F7_AND  = 7'b0000000;
-
-    typedef struct packed { 
-      logic [XLEN-1:0] data;
-      logic [4:0] addr;
-      logic valid;
-    } rd_port_t;
-
-    
-  typedef enum logic [5:0] {
-    LUI,
-    AUIPC,
-    JAL,
-    JALR,
-    BEQ,
-    BNE,
-    BLT,
-    BGE,
-    BLTU,
-    BGEU,
-    LB,
-    LH,
-    LW,
-    LBU,
-    LHU,
-    SB,
-    SH,
-    SW,
-    ADDI,
-    SLTI,
-    SLTIU,
-    XORI,
-    ORI,
-    ANDI,
-    SLLI,
-    SRLI,
-    SRAI,
-    ADD,
-    SUB,
-    SLL,
-    SLT,
-    SLTU,
-    XOR,
-    SRL,
-    SRA,
-    OR,
-    AND,
-    CLZ,
-    CTZ,
-    CPOP,
-    UNKNOWN
-  } operation_e;
-
-
-  typedef enum logic [1:0] {
-    NO_FRWD,
-    MEM_FRWD,
-    EX_FRWD
-  } forwarding_e;
 
   // trace log compatible to spikes commit log feature
   // pragma translate_off
@@ -1124,5 +1038,85 @@ package riscv_pkg;
     byte was_exception;
   } commit_log_t;
   // pragma translate_on
+
+
+  // my definitions
+  typedef enum logic [1:0] {
+    FROM_ALU    = 2'b00,
+    FROM_MEM    = 2'b01,
+    FROM_PCP4   = 2'b10,
+    FROM_PCPIMM = 2'b11
+  } res_src_mux_e;
+
+  typedef enum logic [1:0] {
+    PCP_4    = 2'b00,
+    PCP_IMM  = 2'b01,
+    RS1P_IMM = 2'b10
+  } pc_mux_e;
+
+  typedef enum logic {
+    NO_MEM_WR = 1'b0,
+    MEM_WR_EN = 1'b1
+  } mem_wr_e;
+
+  typedef enum logic {
+    NO_REG_WR = 1'b0,
+    REG_WR_EN = 1'b1
+  } reg_wr_e;
+
+  typedef enum logic [5:0] {
+    LUI,
+    AUIPC,
+    JAL,
+    JALR,
+    BEQ,
+    BNE,
+    BLT,
+    BGE,
+    BLTU,
+    BGEU,
+    LB,
+    LH,
+    LW,
+    LBU,
+    LHU,
+    SB,
+    SH,
+    SW,
+    ADDI,
+    SLTI,
+    SLTIU,
+    XORI,
+    ORI,
+    ANDI,
+    SLLI,
+    SRLI,
+    SRAI,
+    ADD,
+    SUB,
+    SLL,
+    SLT,
+    SLTU,
+    XOR,
+    SRL,
+    SRA,
+    OR,
+    AND,
+    UNKNOWN
+  } alu_ctrl_e;
+
+  typedef enum logic {
+    FROM_REGFILE = 1'b0,
+    FROM_IMM     = 1'b1
+  } alu_src_mux_e;
+
+  // IMM GENERATION CONTROL
+  typedef enum logic [2:0] {
+    I_TYPE,
+    S_TYPE,
+    B_TYPE,
+    U_TYPE,
+    J_TYPE
+  } imm_src_e;
 
 endpackage
