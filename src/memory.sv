@@ -42,7 +42,7 @@ import riscv_pkg::*;
     output logic             rdM_wr_ena_o
 );
 
-    localparam int MEM_SIZE = 256;
+    localparam int MEM_SIZE = 4096;
     logic [31:0]     dmem [MEM_SIZE-1:0];
     initial $readmemh(DMemInitFile, dmem);
     
@@ -75,16 +75,16 @@ import riscv_pkg::*;
             rdM_data_d = {{24'(signed'({dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][7]}))}, dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][7:0]};
           end 
           LH  : begin
-            rdM_data_d = {{16'(signed'({dmem[memM_addr_i[$clog2(MEM_SIZE*2)-1:1]][15]}))}, dmem[memM_addr_i[$clog2(MEM_SIZE*2)-1:1]][15:0]};
+            rdM_data_d = {{16'(signed'({dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][15]}))}, dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][15:0]};
           end
           LW  : begin
-            rdM_data_d = dmem[memM_addr_i[$clog2(MEM_SIZE*4)-1:2]];
+            rdM_data_d = dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]];
           end 
           LBU : begin
             rdM_data_d = {{24'b0}, dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][7:0]};
           end
           LHU : begin
-            rdM_data_d = {{16'b0}, dmem[memM_addr_i[$clog2(MEM_SIZE*2)-1:1]][15:0]};
+            rdM_data_d = {{16'b0}, dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][15:0]};
           end
           default : ;
         endcase
@@ -98,9 +98,9 @@ import riscv_pkg::*;
         end else if (memM_wrt_ena_i) begin
           case(operationM_i)
             SB :         dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][7:0]    <= memM_wrt_data_i[ 7:0];
-            SH :         dmem[memM_addr_i[$clog2(MEM_SIZE*2)-1:1]][15:0] <= memM_wrt_data_i[15:0];
-            SW :         dmem[memM_addr_i[$clog2(MEM_SIZE*4)-1:2]]       <= memM_wrt_data_i;
-            default:     dmem[0] <= '0;
+            SH :         dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]][15:0]   <= memM_wrt_data_i[15:0];
+            SW :         dmem[memM_addr_i[$clog2(MEM_SIZE)-1:0]]         <= memM_wrt_data_i;
+            default:     dmem[0] <= '0; 
           endcase
         end
       end

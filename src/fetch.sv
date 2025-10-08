@@ -8,52 +8,77 @@ import riscv_pkg::*;
   //=====
   input  logic             clk_i,
   input  logic             rstn_i,
-  input  logic             stallFD_i, //STALL(LOAD-USE)
+  input  logic             stallFD_i, //STALL(LW)
   input  logic             flushD_i,  //BRANCH
   input  logic  [XLEN-1:0] next_pc_i,
   input  logic             next_pc_enable_i,
   output logic  [XLEN-1:0] pcF_o,
   output logic  [XLEN-1:0] instrF_o
 );
-    localparam int MEM_SIZE = 4100;
-    logic [XLEN-1:0] imem [MEM_SIZE-1:0];
-    initial $readmemh(IMemInitFile, imem);
+  localparam int MEM_SIZE = 4100;
+  logic [15:0] imem [MEM_SIZE*2-1:0];
+  initial $readmemh(IMemInitFile, imem);
 
-    logic [XLEN-1:0] pc_d;
-    logic [XLEN-1:0] pc_q;
-    
-    logic  [XLEN-1:0] instrF_d;
-    assign instrF_d  = (flushD_i) ? 'h00000013 : imem[pc_q[$clog2(MEM_SIZE*4)-1:2]];
+  logic [XLEN-1:0] pc_d;
+  logic [XLEN-1:0] pc_q;
+  logic [XLEN-1:0] pc2_q;
+  assign pc2_q = pc_q + 2;
+  
+  logic  [    15:0] instrLowerF_d;
+  logic  [    15:0] instrUpperF_d;
 
-    logic tb_update_d;
-    assign tb_update_d = ((flushD_i) | (stallFD_i)) ? 0 : 1;
+  assign instrLowerF_d  = imem[pc_q[$clog2(MEM_SIZE*2):1]];
+  assign instrUpperF_d  = imem[pc2_q[$clog2(MEM_SIZE*2):1]];
 
-    always_ff @(posedge clk_i) begin 
-      if (!rstn_i) begin
-        pcF_o    <= 'h8000_0000;
-        instrF_o <= 'h00000013;
-        tb_update_o <= 0;
-      end else if(!stallFD_i) begin
+  logic  [XLEN-1:0] instrF_d;
+
+  logic tb_update_d;
+  assign tb_update_d = (!stallFD_i) ? (((flushD_i) | (stallFD_i)) ? 0 : 1) : tb_update_o;
+
+  always_ff @(posedge clk_i) begin 
+    if (!rstn_i) begin
+      pcF_o    <= 'h8000_0000;
+      instrF_o <= 'h00000013;
+      tb_update_o <= 0;
+    end else begin
+      if(!stallFD_i) begin
         pcF_o    <= pc_q;
-        instrF_o <= instrF_d;
-        tb_update_o <= tb_update_d;
       end
+      instrF_o <= instrF_d;
+      tb_update_o <= tb_update_d;
     end
+  end
 
-    //IF-ID
-    always_ff @(posedge clk_i) begin : pc_change_ff
-      if (!rstn_i) begin
-        pc_q <= 'h8000_0000;
-      end else if(!stallFD_i) begin
-        pc_q <= pc_d;
-      end 
-    end
+  //IF-ID
+  always_ff @(posedge clk_i) begin : pc_change_ff
+    if (!rstn_i) begin
+      pc_q <= 'h8000_0000;
+    end else begin
+      pc_q <= pc_d;
+    end 
+  end
 
-    always_comb begin : pc_change_comb
-      if (next_pc_enable_i) begin
-        pc_d = next_pc_i;
-      end else begin
-        pc_d = pc_q + 4;
-      end
+  always_comb begin : pc_change_comb
+    if (next_pc_enable_i) begin
+      pc_d = next_pc_i;
+    end else if(stallFD_i) begin
+      pc_d = pc_q;
+    end else if(instrLowerF_d[1:0] == 2'b11) begin
+      pc_d = pc_q + 4;
+    end else begin
+      pc_d = pc_q + 2;
     end
+  end
+
+  always_comb begin
+    if(flushD_i) begin
+      instrF_d = 'h00000013;
+    end else if(stallFD_i) begin
+      instrF_d = instrF_o;
+    end else if(instrLowerF_d[1:0] == 2'b11) begin
+      instrF_d = {instrUpperF_d,instrLowerF_d};
+    end else begin
+      instrF_d = {{16'b0},instrLowerF_d};
+    end
+  end
 endmodule
