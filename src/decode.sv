@@ -32,7 +32,9 @@ module decode
 
     output logic             memD_wr_ena_o,
     output logic  [     4:0] shamtD_data_o,
-    output logic  [XLEN-1:0] immD_o
+    output logic  [XLEN-1:0] immD_o,
+
+    output logic             isCompressed_o
 );
     logic [XLEN-1:0] rf   [31:0];
     alu_ctrl_e       operation_d;
@@ -49,7 +51,8 @@ module decode
       .comp_instr_i(instrD_i[15:0]),
       .decomp_instr_o(decomp_instr)
     );
-    
+    logic isCompressed_d;
+    assign  isCompressed_d = (instrD_i[1:0] != 2'b11);
     logic [XLEN-1:0] instrD_d;
     assign instrD_d = (instrD_i[1:0] != 2'b11) ? decomp_instr : instrD_i;
 
@@ -302,9 +305,10 @@ module decode
           rs1D_addr_o      <= '0;
           rs2D_addr_o      <= '0;
           tb_update_o      <= 0;
+          isCompressed_o   <= 0;
         end else if(!flushE_i) begin
           pcD_o            <= pcD_i;
-          instrD_o         <= instrD_d;
+          instrD_o         <= instrD_i;
           operationD_o     <= operation_d;
           rs1D_data_o      <= rs1_data;
           rs2D_data_o      <= rs2_data;
@@ -316,6 +320,7 @@ module decode
           rs1D_addr_o      <= instrD_d[19:15];
           rs2D_addr_o      <= instrD_d[24:20];
           tb_update_o      <= tb_update_i;
+          isCompressed_o   <= isCompressed_d;
         end else begin
           instrD_o         <= 'h00000013;
           rdD_wr_ena_o     <= '0;

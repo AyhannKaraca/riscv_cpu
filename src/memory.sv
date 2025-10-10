@@ -58,8 +58,8 @@ import riscv_pkg::*;
     logic            tb_mem_read_d;
     logic            tb_update_d;
     assign tb_data_d     = dmem[tb_addr_i[$clog2(MEM_SIZE)-1:0]];
-    assign tb_mem_wrt_d  = (instrM_i[6:0] == OpcodeStore) ? 1 : 0;
-    assign tb_mem_read_d = (instrM_i[6:0] == OpcodeLoad) ? 1 : 0;
+    assign tb_mem_wrt_d  = (operationM_i inside {SB, SH, SW}) ? 1 : 0;
+    assign tb_mem_read_d = (operationM_i inside {LB, LH, LBU, LHU, LW}) ? 1 : 0;
     assign tb_update_d   = (instrM_i == '0) ? 0 :  tb_update_i;
     
     //=====

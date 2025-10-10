@@ -2,10 +2,6 @@
     .globl _start
 
 _start:
-    ################################################
-    # Initialize array in memory using stores (sw)
-    # Base address chosen as 0x80002000 (change if needed)
-    ################################################
     li   x1, 0x80002000    # x1 = base address of array in DMEM
 
     li   x5, 7
@@ -50,6 +46,7 @@ no_swap:
     addi x2, x2, -1        # outer counter--
     li   x7, 1
     bgt  x2, x7, outer_loop
+    jal exit
 
     ################################################
     # Align exit to 0x80001000 (if .text starts at 0x80000000

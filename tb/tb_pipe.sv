@@ -65,26 +65,50 @@ module tb_pipe
     while(instr != 0) begin
       if(update) begin
         instr_cnt = instr_cnt + 1;
-        if(instr[6:0] == OpcodeStore) begin
-          case(instr[14:12])
-            3'b000: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[7:0]);
-            3'b001: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[15:0]);
-            3'b010: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%8h", pc, instr, mem_addr, mem_data);
-          endcase
-        end else if(instr[6:0] == OpcodeLoad) begin
-          if(reg_addr>9)begin
-              $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
+        if(mem_wrt) begin
+          if(instr[1:0] == 2'b11) begin
+            case(instr[14:12])
+              3'b000: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[7:0]);
+              3'b001: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%h", pc, instr, mem_addr, mem_data[15:0]);
+              3'b010: $fdisplay(file_pointer, "0x%8h (0x%8h) mem 0x%8h 0x%8h", pc, instr, mem_addr, mem_data);
+            endcase
           end else begin
-              $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
+            $fdisplay(file_pointer, "0x%8h (0x%h) mem 0x%8h 0x%8h", pc, instr[15:0], mem_addr, mem_data);
+          end
+        end else if(mem_read) begin
+          if(reg_addr>9)begin
+              if(instr[1:0] == 2'b11) begin
+                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
+              end else begin
+                $fdisplay(file_pointer, "0x%8h (0x%h) x%0d 0x%8h mem 0x%8h", pc, instr[15:0], reg_addr, reg_data, mem_addr);
+              end
+          end else begin
+              if(instr[1:0] == 2'b11) begin
+                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h mem 0x%8h", pc, instr, reg_addr, reg_data, mem_addr);
+              end else begin
+                $fdisplay(file_pointer, "0x%8h (0x%h) x%0d  0x%8h mem 0x%8h", pc, instr[15:0], reg_addr, reg_data, mem_addr);
+              end
           end
         end else begin
           if ((reg_addr == 0) | (instr[6:0] == OpcodeBranch)) begin
-            $fdisplay(file_pointer, "0x%8h (0x%8h)", pc, instr);
+            if(instr[1:0] == 2'b11) begin
+              $fdisplay(file_pointer, "0x%8h (0x%8h)", pc, instr);
+            end else begin
+              $fdisplay(file_pointer, "0x%8h (0x%h)", pc, instr[15:0]);
+            end
           end else begin
             if (reg_addr>9) begin
-              $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h", pc, instr, reg_addr, reg_data); 
+              if(instr[1:0] == 2'b11) begin
+                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d 0x%8h", pc, instr, reg_addr, reg_data); 
+              end else begin
+                $fdisplay(file_pointer, "0x%8h (0x%h) x%0d 0x%8h", pc, instr[15:0], reg_addr, reg_data);
+              end
             end else begin
-              $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h", pc, instr, reg_addr, reg_data);
+              if(instr[1:0] == 2'b11) begin
+                $fdisplay(file_pointer, "0x%8h (0x%8h) x%0d  0x%8h", pc, instr, reg_addr, reg_data);
+              end else begin
+                $fdisplay(file_pointer, "0x%8h (0x%h) x%0d  0x%8h", pc, instr[15:0], reg_addr, reg_data);
+              end
             end
           end
         end
@@ -97,5 +121,10 @@ module tb_pipe
     $fdisplay(file_pointer, "CPI: %f", cpi);
     $fdisplay(file_pointer, "============================================");
     $finish;
+  end
+
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars();
   end
 endmodule

@@ -67,7 +67,9 @@ logic             flushD;
 //TB UPDATE
 logic             updateFD; 
 logic             updateDE; 
-logic             updateEM; 
+logic             updateEM;
+
+logic             isCompressed; 
 
 
 assign reg_addr_o = rdWB_addr;
@@ -109,7 +111,8 @@ decode i_decode(
   .rdD_wr_ena_o(rdD_E_wr_ena),
   .memD_wr_ena_o(memD_E_wr_ena),
   .shamtD_data_o(shamtD_E_data),
-  .immD_o(immD_E)  
+  .immD_o(immD_E),
+  .isCompressed_o(isCompressed)
 );
 
 execute i_execute(
@@ -117,6 +120,7 @@ execute i_execute(
   .rstn_i(rstn_i),
   .tb_update_i(updateDE),
   .tb_update_o(updateEM),
+  .isCompressed_i(isCompressed),
   .pcE_i(pcD_E),
   .instrE_i(instrD_E),
   .forwardAE_i(forwardA),

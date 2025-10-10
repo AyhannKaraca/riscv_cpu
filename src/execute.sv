@@ -8,6 +8,8 @@ module execute
     input  logic               tb_update_i,
     output logic               tb_update_o,
 
+    input  logic               isCompressed_i,
+
     input  logic  [XLEN-1:0]   pcE_i,
     input  logic  [XLEN-1:0]   instrE_i,
     //FOR HAZARD DET
@@ -117,12 +119,20 @@ module execute
         JAL: begin
           next_pc_ena_o = 1'b1;
           next_pc_o = immE_i + pcE_i;
-          rdE_data_d     = pcE_i + 4;
+          if(isCompressed_i) begin
+            rdE_data_d     = pcE_i + 2; // if isComp is asserted, rdE_data_d should be pcE_i + 2
+          end else begin
+            rdE_data_d     = pcE_i + 4;
+          end
         end
         JALR: begin
           next_pc_ena_o = 1'b1;
           next_pc_o = immE_i + rs1_data_d;
-          rdE_data_d     = pcE_i + 4;
+          if(isCompressed_i) begin
+            rdE_data_d     = pcE_i + 2; // if isComp is asserted, rdE_data_d should be pcE_i + 2
+          end else begin
+            rdE_data_d     = pcE_i + 4;
+          end
         end
         BEQ:
           if (rs1_data_d == rs2_data_d) begin
@@ -196,7 +206,7 @@ module execute
           rdE_data_d     = rs1_data_d - rs2_data_d;
         end
         SLL: begin
-          rdE_data_d     = rs1_data_d << rs2_data_d;
+          rdE_data_d     = rs1_data_d << rs2_data_d[4:0];
         end
         SLT: begin
           if ($signed(rs1_data_d) < $signed(rs2_data_d))  rdE_data_d     = 32'b1;
@@ -208,7 +218,7 @@ module execute
           rdE_data_d     = rs1_data_d ^ rs2_data_d;  
         end
         SRL: begin
-          rdE_data_d     = rs1_data_d >> rs2_data_d;
+          rdE_data_d     = rs1_data_d >> rs2_data_d[4:0];
         end
         SRA: begin
           rdE_data_d     = $signed(rs1_data_d) >>> rs2_data_d;
