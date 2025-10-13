@@ -1,0 +1,157 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Mon Oct 13 10:44:27 2025
+[*]
+[dumpfile] "/home/ayhan/riscv_cpu/dump.vcd"
+[dumpfile_mtime] "Mon Oct 13 10:35:06 2025"
+[dumpfile_size] 53310
+[savefile] "/home/ayhan/riscv_cpu/loopwave.gtkw"
+[timestart] 10230
+[size] 1920 973
+[pos] -27 -24
+*-12.900000 45000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_pipe.
+[treeopen] tb_pipe.DUT.
+[sst_width] 297
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 549
+@200
+-FETCH
+@22
+tb_pipe.DUT.i_fetch.IMemInitFile[63:0]
+tb_pipe.DUT.i_fetch.MEM_SIZE[31:0]
+tb_pipe.DUT.i_fetch.branch_addr_i[31:0]
+@28
+tb_pipe.DUT.i_fetch.branch_pred_i
+tb_pipe.DUT.i_fetch.clk_i
+tb_pipe.DUT.i_fetch.flushD_i
+@22
+tb_pipe.DUT.i_fetch.instrF_d[31:0]
+[color] 3
+tb_pipe.DUT.i_fetch.instrF_o[31:0]
+tb_pipe.DUT.i_fetch.instrLowerF_d[15:0]
+tb_pipe.DUT.i_fetch.instrUpperF_d[15:0]
+@28
+tb_pipe.DUT.i_fetch.next_pc_enable_i
+@22
+tb_pipe.DUT.i_fetch.next_pc_i[31:0]
+tb_pipe.DUT.i_fetch.pc2_q[31:0]
+tb_pipe.DUT.i_fetch.pcF_o[31:0]
+@23
+tb_pipe.DUT.i_fetch.pc_d[31:0]
+@22
+tb_pipe.DUT.i_fetch.pc_q_o[31:0]
+@28
+tb_pipe.DUT.i_fetch.rstn_i
+tb_pipe.DUT.i_fetch.stallFD_i
+tb_pipe.DUT.i_fetch.tb_update_d
+tb_pipe.DUT.i_fetch.tb_update_o
+@200
+-DECODE
+@28
+tb_pipe.DUT.i_decode.clk_i
+@22
+tb_pipe.DUT.i_decode.decomp_instr[31:0]
+@28
+tb_pipe.DUT.i_decode.flushE_i
+@22
+tb_pipe.DUT.i_decode.immD_o[31:0]
+tb_pipe.DUT.i_decode.imm_data[31:0]
+tb_pipe.DUT.i_decode.instrD_d[31:0]
+tb_pipe.DUT.i_decode.instrD_i[31:0]
+tb_pipe.DUT.i_decode.instrD_o[31:0]
+@28
+tb_pipe.DUT.i_decode.isCompressed_d
+tb_pipe.DUT.i_decode.isCompressed_o
+tb_pipe.DUT.i_decode.memD_wr_ena_o
+tb_pipe.DUT.i_decode.mem_wr_ena_d
+@22
+tb_pipe.DUT.i_decode.operationD_o[5:0]
+tb_pipe.DUT.i_decode.operation_d[5:0]
+tb_pipe.DUT.i_decode.pcD_i[31:0]
+tb_pipe.DUT.i_decode.pcD_o[31:0]
+tb_pipe.DUT.i_decode.rdD_addr_d[4:0]
+tb_pipe.DUT.i_decode.rdD_addr_i[4:0]
+tb_pipe.DUT.i_decode.rdD_addr_o[4:0]
+tb_pipe.DUT.i_decode.rdD_data_i[31:0]
+@28
+tb_pipe.DUT.i_decode.rdD_wr_ena_i
+tb_pipe.DUT.i_decode.rdD_wr_ena_o
+tb_pipe.DUT.i_decode.rd_wr_enable
+@22
+tb_pipe.DUT.i_decode.rs1D_addr_o[4:0]
+tb_pipe.DUT.i_decode.rs1D_data_o[31:0]
+tb_pipe.DUT.i_decode.rs1_data[31:0]
+tb_pipe.DUT.i_decode.rs2D_addr_o[4:0]
+tb_pipe.DUT.i_decode.rs2D_data_o[31:0]
+tb_pipe.DUT.i_decode.rs2_data[31:0]
+@28
+tb_pipe.DUT.i_decode.rstn_i
+@22
+tb_pipe.DUT.i_decode.shamtD_data_o[4:0]
+tb_pipe.DUT.i_decode.shamt_data[4:0]
+@28
+tb_pipe.DUT.i_decode.tb_update_i
+tb_pipe.DUT.i_decode.tb_update_o
+@200
+-EX
+@28
+tb_pipe.DUT.i_execute.clk_i
+@22
+tb_pipe.DUT.i_execute.forwM_data_i[31:0]
+tb_pipe.DUT.i_execute.forwW_data_i[31:0]
+@28
+tb_pipe.DUT.i_execute.forwardAE_i[1:0]
+tb_pipe.DUT.i_execute.forwardBE_i[1:0]
+@22
+tb_pipe.DUT.i_execute.immE_i[31:0]
+tb_pipe.DUT.i_execute.instrE_i[31:0]
+tb_pipe.DUT.i_execute.instrE_o[31:0]
+@28
+tb_pipe.DUT.i_execute.isCompressed_i
+@22
+tb_pipe.DUT.i_execute.memE_addr_o[31:0]
+tb_pipe.DUT.i_execute.memE_wr_data_o[31:0]
+@28
+tb_pipe.DUT.i_execute.memE_wr_ena_o
+tb_pipe.DUT.i_execute.memE_wrt_ena_d
+tb_pipe.DUT.i_execute.memE_wrt_ena_i
+@22
+tb_pipe.DUT.i_execute.mem_addr_d[31:0]
+tb_pipe.DUT.i_execute.mem_wrt_data_d[31:0]
+@28
+tb_pipe.DUT.i_execute.next_pc_ena_o
+@22
+tb_pipe.DUT.i_execute.next_pc_o[31:0]
+tb_pipe.DUT.i_execute.operationE_i[5:0]
+tb_pipe.DUT.i_execute.operationE_o[5:0]
+tb_pipe.DUT.i_execute.pcE_i[31:0]
+tb_pipe.DUT.i_execute.pcE_o[31:0]
+tb_pipe.DUT.i_execute.rdE_addr_d[4:0]
+tb_pipe.DUT.i_execute.rdE_addr_i[4:0]
+tb_pipe.DUT.i_execute.rdE_addr_o[4:0]
+tb_pipe.DUT.i_execute.rdE_data_d[31:0]
+tb_pipe.DUT.i_execute.rdE_data_o[31:0]
+@28
+tb_pipe.DUT.i_execute.rdE_wr_ena_d
+tb_pipe.DUT.i_execute.rdE_wr_ena_o
+tb_pipe.DUT.i_execute.rdE_wrt_ena_i
+@22
+tb_pipe.DUT.i_execute.rs1E_addr_i[4:0]
+tb_pipe.DUT.i_execute.rs1E_addr_o[4:0]
+tb_pipe.DUT.i_execute.rs1E_data_i[31:0]
+tb_pipe.DUT.i_execute.rs1_data_d[31:0]
+tb_pipe.DUT.i_execute.rs2E_addr_i[4:0]
+tb_pipe.DUT.i_execute.rs2E_addr_o[4:0]
+tb_pipe.DUT.i_execute.rs2E_data_i[31:0]
+tb_pipe.DUT.i_execute.rs2_data_d[31:0]
+@28
+tb_pipe.DUT.i_execute.rstn_i
+@22
+tb_pipe.DUT.i_execute.shamt_dataE_i[4:0]
+@28
+tb_pipe.DUT.i_execute.tb_update_i
+tb_pipe.DUT.i_execute.tb_update_o
+[pattern_trace] 1
+[pattern_trace] 0

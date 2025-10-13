@@ -33,7 +33,7 @@ import riscv_pkg::*;
   logic  [XLEN-1:0] instrF_d;
 
   logic tb_update_d;
-  assign tb_update_d = (!stallFD_i) ? (((flushD_i) | (stallFD_i)) ? 0 : 1) : tb_update_o;
+  assign tb_update_d = (!stallFD_i) ? ((flushD_i) ? 0 : 1) : tb_update_o;
 
   always_ff @(posedge clk_i) begin 
     if (!rstn_i) begin
