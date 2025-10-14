@@ -8,22 +8,32 @@ import riscv_pkg::*;
   //=====
   input  logic             clk_i,
   input  logic             rstn_i,
+  input  logic             hitF_i,
+  input  logic             next_pc_ena,
+  output logic             bTaken_o,
   input  logic             stallFD_i, //STALL(LW)
-  input  logic             flushD_i,  //BRANCH
+  input  logic             flushD_i,  //WRONG BRANCH
+  input  logic  [XLEN-1:0] instrE_i,
   input  logic  [XLEN-1:0] next_pc_i,
-  input  logic             next_pc_enable_i,
+  input  logic  [XLEN-1:0] ex_pc_i,
+  input  logic  [XLEN-1:0] target_addr_i,//Branch pred addr
   output logic  [XLEN-1:0] pcF_o,
-  output logic  [XLEN-1:0] instrF_o
+  output logic  [XLEN-1:0] instrF_o,
+  output logic  [XLEN-1:0] pcq_o
 );
-  localparam int MEM_SIZE = 4100;
+  localparam int MEM_SIZE = 4096;
   logic [15:0] imem [MEM_SIZE*2-1:0];
   initial $readmemh(IMemInitFile, imem);
 
   logic [XLEN-1:0] pc_d;
+
   logic [XLEN-1:0] pc_q;
+  assign pcq_o = pc_q;
+
   logic [XLEN-1:0] pc2_q;
   assign pc2_q = pc_q + 2;
-  
+
+
   logic  [    15:0] instrLowerF_d;
   logic  [    15:0] instrUpperF_d;
 
@@ -35,22 +45,25 @@ import riscv_pkg::*;
   logic tb_update_d;
   assign tb_update_d = (!stallFD_i) ? ((flushD_i) ? 0 : 1) : tb_update_o;
 
+  //IF-ID
   always_ff @(posedge clk_i) begin 
     if (!rstn_i) begin
       pcF_o    <= 'h8000_0000;
       instrF_o <= 'h00000013;
       tb_update_o <= 0;
+      bTaken_o    <= 0;
     end else begin
       if(!stallFD_i) begin
         pcF_o    <= pc_q;
       end
-      instrF_o <= instrF_d;
+      instrF_o    <= instrF_d;
       tb_update_o <= tb_update_d;
+      bTaken_o    <= hitF_i;
     end
   end
 
-  //IF-ID
-  always_ff @(posedge clk_i) begin : pc_change_ff
+  
+  always_ff @(posedge clk_i) begin
     if (!rstn_i) begin
       pc_q <= 'h8000_0000;
     end else begin
@@ -58,11 +71,19 @@ import riscv_pkg::*;
     end 
   end
 
-  always_comb begin : pc_change_comb
-    if (next_pc_enable_i) begin
+  always_comb begin
+    if (flushD_i & next_pc_ena) begin
       pc_d = next_pc_i;
+    end else if(flushD_i & !next_pc_ena) begin
+      if(instrE_i[1:0] == 2'b11) begin
+        pc_d = ex_pc_i + 4;
+      end else begin
+        pc_d = ex_pc_i + 2;
+      end
     end else if(stallFD_i) begin
       pc_d = pc_q;
+    end else if(hitF_i) begin
+      pc_d = target_addr_i;
     end else if(instrLowerF_d[1:0] == 2'b11) begin
       pc_d = pc_q + 4;
     end else begin

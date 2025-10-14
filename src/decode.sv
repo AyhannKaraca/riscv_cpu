@@ -34,7 +34,10 @@ module decode
     output logic  [     4:0] shamtD_data_o,
     output logic  [XLEN-1:0] immD_o,
 
-    output logic             isCompressed_o
+    output logic             isCompressed_o,
+    
+    input  logic             bTakenD_i,
+    output logic             bTakenD_o
 );
     logic [XLEN-1:0] rf   [31:0];
     alu_ctrl_e       operation_d;
@@ -306,7 +309,9 @@ module decode
           rs2D_addr_o      <= '0;
           tb_update_o      <= 0;
           isCompressed_o   <= 0;
+          bTakenD_o        <= 0;
         end else if(!flushE_i) begin
+          bTakenD_o        <= bTakenD_i;
           pcD_o            <= pcD_i;
           instrD_o         <= instrD_i;
           operationD_o     <= operation_d;
@@ -328,6 +333,8 @@ module decode
           operationD_o     <= UNKNOWN;
           rdD_addr_o       <= '0;
           tb_update_o      <=  0;
+          bTakenD_o        <=  0;
+          pcD_o            <= pcD_i;
         end
     end
 endmodule

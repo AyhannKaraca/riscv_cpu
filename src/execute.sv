@@ -52,7 +52,10 @@ module execute
 
     //BRANCH SIGNALS (COMB)
     output logic               next_pc_ena_o,
-    output logic  [XLEN-1:0]   next_pc_o
+    output logic  [XLEN-1:0]   next_pc_o,
+
+    input  logic               bTakenE_i,
+    output logic               wrong_branch_o
 );
 
     logic  [XLEN-1:0] mem_addr_d;
@@ -64,6 +67,8 @@ module execute
 
     logic  [XLEN-1:0] rs1_data_d;
     logic  [XLEN-1:0] rs2_data_d;
+
+    assign wrong_branch_o = bTakenE_i ^ next_pc_ena_o;
 
     always_comb begin
       case(forwardAE_i)

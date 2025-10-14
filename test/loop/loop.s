@@ -7,14 +7,14 @@ _start:
     # Configurations
     ############################################################
     li      x1, 2        # RUNS (outer repetition count)
-    li      x2, 10000         # PH1_LOOP (big loop)
+    li      x2, 10         # PH1_LOOP (big loop) --10000 
     li      x3, 3             # PH2_LOOP (small loop)
-    li      x4, 256           # PH3_OUTER
-    li      x5, 64            # PH3_INNER
+    li      x4, 25           # PH3_OUTER
+    li      x5, 6            # PH3_INNER
     li      x6, 1             # LFSR seed
-    li      x7, 5000          # PH4_LOOP (random)
-    li      x8, 10000         # PH5_LOOP (biased)
-    li      x9, 10000         # PH6_LOOP (alternating)
+    li      x7, 5          # PH4_LOOP (random) -5000
+    li      x8, 10         # PH5_LOOP (biased) -10000 
+    li      x9, 10         # PH6_LOOP (alternating) -10000 
 
     li      x10, 0            # outer run counter
     li      x11, 0

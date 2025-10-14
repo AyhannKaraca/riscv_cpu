@@ -69,7 +69,16 @@ logic             updateFD;
 logic             updateDE; 
 logic             updateEM;
 
-logic             isCompressed; 
+logic             isCompressed;
+
+logic             hitF;
+logic  [XLEN-1:0] pc_q;
+logic  [XLEN-1:0] target_addr;
+
+logic             bTakenF;
+logic             bTakenD;
+
+logic             wrong_branch;
 
 
 assign reg_addr_o = rdWB_addr;
@@ -81,12 +90,18 @@ fetch #(
   .tb_update_o(updateFD),
   .clk_i(clk_i),
   .rstn_i(rstn_i),
+  .hitF_i(hitF),
+  .next_pc_ena(next_pc_enable),
+  .bTaken_o(bTakenF),
   .stallFD_i(stallFD),
   .flushD_i(flushD),
+  .instrE_i(instrD_E),
   .next_pc_i(next_pc),
-  .next_pc_enable_i(next_pc_enable),
+  .ex_pc_i(pcD_E),
+  .target_addr_i(target_addr),
   .pcF_o(pcF_D),
-  .instrF_o(instrF_D)
+  .instrF_o(instrF_D),
+  .pcq_o(pc_q)
 );
 
 decode i_decode(
@@ -112,7 +127,9 @@ decode i_decode(
   .memD_wr_ena_o(memD_E_wr_ena),
   .shamtD_data_o(shamtD_E_data),
   .immD_o(immD_E),
-  .isCompressed_o(isCompressed)
+  .isCompressed_o(isCompressed),
+  .bTakenD_i(bTakenF),
+  .bTakenD_o(bTakenD)
 );
 
 execute i_execute(
@@ -149,7 +166,9 @@ execute i_execute(
   .memE_addr_o    (memE_M_addr),
   .memE_wr_data_o (memE_M_wr_data),
   .next_pc_ena_o(next_pc_enable),
-  .next_pc_o(next_pc)
+  .next_pc_o(next_pc),
+  .bTakenE_i(bTakenD),
+  .wrong_branch_o(wrong_branch)
 );
 
 memory #(
@@ -195,11 +214,21 @@ hazard_unit i_hazard_unit(
   .rdE_addr_i(rdD_E_addr),
   .opE_i(operationD_E),
   .stallFD_o(stallFD),
-  .branch_taken_i(next_pc_enable),
   .flushE_o(flushE),
+  .wrong_branch_i(wrong_branch),
   .flushD_o(flushD)
 );
 
+branchPredictor i_branchPredictor(
+  .clk_i(clk_i),
+  .rstn_i(rstn_i),
+  .fetchPc_i(pc_q),
+  .fetchHit_o(hitF),
+  .fetchTarget_o(target_addr),
+  .exTaken_i(next_pc_enable),
+  .exPc_i(pcD_E),
+  .exTarget_i(next_pc)  
+);
 
 
 

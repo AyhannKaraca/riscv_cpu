@@ -6,122 +6,122 @@ Disassembly of section .text:
 
 80000000 <_start>:
 80000000:	4089                	li	ra,2
-80000002:	00002137          	lui	sp,0x2
-80000006:	71010113          	addi	sp,sp,1808 # 2710 <_start-0x7fffd8f0>
-8000000a:	418d                	li	gp,3
-8000000c:	10000213          	li	tp,256
-80000010:	04000293          	li	t0,64
-80000014:	4305                	li	t1,1
-80000016:	6385                	lui	t2,0x1
-80000018:	38838393          	addi	t2,t2,904 # 1388 <_start-0x7fffec78>
-8000001c:	6409                	lui	s0,0x2
-8000001e:	71040413          	addi	s0,s0,1808 # 2710 <_start-0x7fffd8f0>
-80000022:	6489                	lui	s1,0x2
-80000024:	71048493          	addi	s1,s1,1808 # 2710 <_start-0x7fffd8f0>
-80000028:	4501                	li	a0,0
-8000002a:	4581                	li	a1,0
-8000002c:	4601                	li	a2,0
-8000002e:	4681                	li	a3,0
-80000030:	4701                	li	a4,0
-80000032:	4781                	li	a5,0
+80000002:	4129                	li	sp,10
+80000004:	418d                	li	gp,3
+80000006:	4265                	li	tp,25
+80000008:	4299                	li	t0,6
+8000000a:	4305                	li	t1,1
+8000000c:	4395                	li	t2,5
+8000000e:	4429                	li	s0,10
+80000010:	44a9                	li	s1,10
+80000012:	4501                	li	a0,0
+80000014:	4581                	li	a1,0
+80000016:	4601                	li	a2,0
+80000018:	4681                	li	a3,0
+8000001a:	4701                	li	a4,0
+8000001c:	4781                	li	a5,0
 
-80000034 <outer_runs>:
-80000034:	0505                	addi	a0,a0,1
-80000036:	00154363          	blt	a0,ra,8000003c <phases_start>
-8000003a:	a051                	j	800000be <all_done>
+8000001e <outer_runs>:
+8000001e:	0505                	addi	a0,a0,1
+80000020:	00154363          	blt	a0,ra,80000026 <phases_start>
+80000024:	a051                	j	800000a8 <all_done>
 
-8000003c <phases_start>:
-8000003c:	858a                	mv	a1,sp
+80000026 <phases_start>:
+80000026:	858a                	mv	a1,sp
 
-8000003e <ph1_loop_top>:
-8000003e:	15fd                	addi	a1,a1,-1
-80000040:	0605                	addi	a2,a2,1
-80000042:	fdf5                	bnez	a1,8000003e <ph1_loop_top>
-80000044:	3e800693          	li	a3,1000
+80000028 <ph1_loop_top>:
+80000028:	15fd                	addi	a1,a1,-1
+8000002a:	0605                	addi	a2,a2,1
+8000002c:	fdf5                	bnez	a1,80000028 <ph1_loop_top>
+8000002e:	3e800693          	li	a3,1000
 
-80000048 <ph2_repeat>:
-80000048:	16fd                	addi	a3,a3,-1
-8000004a:	858e                	mv	a1,gp
+80000032 <ph2_repeat>:
+80000032:	16fd                	addi	a3,a3,-1
+80000034:	858e                	mv	a1,gp
 
-8000004c <ph2_loop_top>:
-8000004c:	15fd                	addi	a1,a1,-1
-8000004e:	0609                	addi	a2,a2,2
-80000050:	fdf5                	bnez	a1,8000004c <ph2_loop_top>
-80000052:	fafd                	bnez	a3,80000048 <ph2_repeat>
-80000054:	8712                	mv	a4,tp
+80000036 <ph2_loop_top>:
+80000036:	15fd                	addi	a1,a1,-1
+80000038:	0609                	addi	a2,a2,2
+8000003a:	fdf5                	bnez	a1,80000036 <ph2_loop_top>
+8000003c:	fafd                	bnez	a3,80000032 <ph2_repeat>
+8000003e:	8712                	mv	a4,tp
 
-80000056 <ph3_outer>:
-80000056:	177d                	addi	a4,a4,-1
-80000058:	8596                	mv	a1,t0
+80000040 <ph3_outer>:
+80000040:	177d                	addi	a4,a4,-1
+80000042:	8596                	mv	a1,t0
 
-8000005a <ph3_inner>:
-8000005a:	15fd                	addi	a1,a1,-1
-8000005c:	962e                	add	a2,a2,a1
-8000005e:	fdf5                	bnez	a1,8000005a <ph3_inner>
-80000060:	fb7d                	bnez	a4,80000056 <ph3_outer>
-80000062:	859e                	mv	a1,t2
+80000044 <ph3_inner>:
+80000044:	15fd                	addi	a1,a1,-1
+80000046:	962e                	add	a2,a2,a1
+80000048:	fdf5                	bnez	a1,80000044 <ph3_inner>
+8000004a:	fb7d                	bnez	a4,80000040 <ph3_outer>
+8000004c:	859e                	mv	a1,t2
 
-80000064 <ph4_loop>:
-80000064:	15fd                	addi	a1,a1,-1
-80000066:	00d31613          	slli	a2,t1,0xd
-8000006a:	00c34333          	xor	t1,t1,a2
-8000006e:	01135613          	srli	a2,t1,0x11
-80000072:	00c34333          	xor	t1,t1,a2
-80000076:	00531613          	slli	a2,t1,0x5
-8000007a:	00c34333          	xor	t1,t1,a2
-8000007e:	00137613          	andi	a2,t1,1
-80000082:	c219                	beqz	a2,80000088 <ph4_not_taken>
-80000084:	0685                	addi	a3,a3,1
-80000086:	a011                	j	8000008a <ph4_continue>
+8000004e <ph4_loop>:
+8000004e:	15fd                	addi	a1,a1,-1
+80000050:	00d31613          	slli	a2,t1,0xd
+80000054:	00c34333          	xor	t1,t1,a2
+80000058:	01135613          	srli	a2,t1,0x11
+8000005c:	00c34333          	xor	t1,t1,a2
+80000060:	00531613          	slli	a2,t1,0x5
+80000064:	00c34333          	xor	t1,t1,a2
+80000068:	00137613          	andi	a2,t1,1
+8000006c:	c219                	beqz	a2,80000072 <ph4_not_taken>
+8000006e:	0685                	addi	a3,a3,1
+80000070:	a011                	j	80000074 <ph4_continue>
 
-80000088 <ph4_not_taken>:
-80000088:	0689                	addi	a3,a3,2
+80000072 <ph4_not_taken>:
+80000072:	0689                	addi	a3,a3,2
 
-8000008a <ph4_continue>:
-8000008a:	fde9                	bnez	a1,80000064 <ph4_loop>
-8000008c:	85a2                	mv	a1,s0
-8000008e:	4701                	li	a4,0
+80000074 <ph4_continue>:
+80000074:	fde9                	bnez	a1,8000004e <ph4_loop>
+80000076:	85a2                	mv	a1,s0
+80000078:	4701                	li	a4,0
 
-80000090 <ph5_loop>:
-80000090:	15fd                	addi	a1,a1,-1
-80000092:	0705                	addi	a4,a4,1
-80000094:	47a9                	li	a5,10
-80000096:	00f74363          	blt	a4,a5,8000009c <ph5_taken_check>
-8000009a:	4701                	li	a4,0
+8000007a <ph5_loop>:
+8000007a:	15fd                	addi	a1,a1,-1
+8000007c:	0705                	addi	a4,a4,1
+8000007e:	47a9                	li	a5,10
+80000080:	00f74363          	blt	a4,a5,80000086 <ph5_taken_check>
+80000084:	4701                	li	a4,0
 
-8000009c <ph5_taken_check>:
-8000009c:	c319                	beqz	a4,800000a2 <ph5_not_taken>
+80000086 <ph5_taken_check>:
+80000086:	c319                	beqz	a4,8000008c <ph5_not_taken>
+80000088:	0685                	addi	a3,a3,1
+8000008a:	a011                	j	8000008e <ph5_continue>
+
+8000008c <ph5_not_taken>:
+8000008c:	0689                	addi	a3,a3,2
+
+8000008e <ph5_continue>:
+8000008e:	f5f5                	bnez	a1,8000007a <ph5_loop>
+80000090:	85a6                	mv	a1,s1
+80000092:	4701                	li	a4,0
+
+80000094 <ph6_loop>:
+80000094:	15fd                	addi	a1,a1,-1
+80000096:	0705                	addi	a4,a4,1
+80000098:	00177613          	andi	a2,a4,1
+8000009c:	c219                	beqz	a2,800000a2 <ph6_not_taken>
 8000009e:	0685                	addi	a3,a3,1
-800000a0:	a011                	j	800000a4 <ph5_continue>
+800000a0:	a011                	j	800000a4 <ph6_cont>
 
-800000a2 <ph5_not_taken>:
+800000a2 <ph6_not_taken>:
 800000a2:	0689                	addi	a3,a3,2
 
-800000a4 <ph5_continue>:
-800000a4:	f5f5                	bnez	a1,80000090 <ph5_loop>
-800000a6:	85a6                	mv	a1,s1
-800000a8:	4701                	li	a4,0
+800000a4 <ph6_cont>:
+800000a4:	f9e5                	bnez	a1,80000094 <ph6_loop>
+800000a6:	bfa5                	j	8000001e <outer_runs>
 
-800000aa <ph6_loop>:
-800000aa:	15fd                	addi	a1,a1,-1
-800000ac:	0705                	addi	a4,a4,1
-800000ae:	00177613          	andi	a2,a4,1
-800000b2:	c219                	beqz	a2,800000b8 <ph6_not_taken>
-800000b4:	0685                	addi	a3,a3,1
-800000b6:	a011                	j	800000ba <ph6_cont>
+800000a8 <all_done>:
+800000a8:	2021                	jal	800000b0 <exit>
+800000aa:	00000013          	nop
+800000ae:	0001                	nop
 
-800000b8 <ph6_not_taken>:
-800000b8:	0689                	addi	a3,a3,2
-
-800000ba <ph6_cont>:
-800000ba:	f9e5                	bnez	a1,800000aa <ph6_loop>
-800000bc:	bfa5                	j	80000034 <outer_runs>
-
-800000be <all_done>:
-800000be:	2009                	jal	800000c0 <exit>
-
-800000c0 <exit>:
-800000c0:	0001                	nop
+800000b0 <exit>:
+800000b0:	0001                	nop
+800000b2:	0001                	nop
+800000b4:	00000013          	nop
 
 Disassembly of section .riscv.attributes:
 

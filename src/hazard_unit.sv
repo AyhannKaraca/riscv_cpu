@@ -17,15 +17,15 @@ import riscv_pkg::*;
   output logic          stallFD_o,
   output logic          flushE_o,
   
-  input  logic          branch_taken_i,
+  input  logic          wrong_branch_i,//wrong_branch
   output logic          flushD_o
 );
 
 logic lw_stall;
 assign lw_stall = (opE_i inside {LB,LH,LW,LBU,LHU}) & ((rs1D_addr_i == rdE_addr_i) | (rs2D_addr_i == rdE_addr_i));
 assign stallFD_o = lw_stall;
-assign flushD_o = branch_taken_i;
-assign flushE_o = lw_stall | branch_taken_i;
+assign flushD_o = wrong_branch_i;
+assign flushE_o = lw_stall | wrong_branch_i;
 
 always_comb begin
   if(((rs1E_addr_i == rdM_addr_i) & rdM_wr_ena_i) & rs1E_addr_i != 0) begin
