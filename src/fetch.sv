@@ -58,10 +58,10 @@ import riscv_pkg::*;
     end else begin
       if(!stallFD_i) begin
         pcF_o    <= pc_q;
+        bTaken_o    <= hitF_d;
       end
       instrF_o    <= instrF_d;
       tb_update_o <= tb_update_d;
-      bTaken_o    <= hitF_d;
     end
   end
 
