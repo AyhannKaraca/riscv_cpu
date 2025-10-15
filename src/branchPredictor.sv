@@ -39,21 +39,21 @@ module branchPredictor #(
   assign fetchIndex = fetchPc_i[INDEX_WIDTH:1]; 
   assign exIndex    = exPc_i[INDEX_WIDTH:1];
 
-  assign fetchEntry = btb_mem[fetchIndex]; // fetchdeki pcnin indeksiyle eriştiğimiz btb satırı
-  assign exEntry_   = btb_mem[exIndex];    // exteki pcnin indeksiyle eriştiğimiz btb satırı
+  assign fetchEntry = btb_mem[fetchIndex]; 
+  assign exEntry_   = btb_mem[exIndex];    
 
-  assign fetchTag   = fetchPc_i[31:INDEX_WIDTH]; // fetchteki pc nin tagi
-  assign exTag      = exPc_i[31:INDEX_WIDTH];    // ex teki pc nin tagi
+  assign fetchTag   = fetchPc_i[31:INDEX_WIDTH]; 
+  assign exTag      = exPc_i[31:INDEX_WIDTH];    
  
-  assign fetchTagBtb = fetchEntry[TAG_MSB:TAG_LSB]; // fechteki btbnin içindeki pc nin tagi
-  assign exTagBtb    = exEntry_[TAG_MSB:TAG_LSB];   // ex teki btbnin içindeki pc nin tagi
+  assign fetchTagBtb = fetchEntry[TAG_MSB:TAG_LSB]; 
+  assign exTagBtb    = exEntry_[TAG_MSB:TAG_LSB];   
 
-  assign fetchCounter = fetchEntry[COUNTER_MSB:COUNTER_LSB]; // fetchdeki pc indexiyle ulaşılan btb satırının cnt
-  assign exCounter    = exEntry_[COUNTER_MSB:COUNTER_LSB];   // exteki pc indexiyle ulaşılan btb satırının cnt
+  assign fetchCounter = fetchEntry[COUNTER_MSB:COUNTER_LSB]; 
+  assign exCounter    = exEntry_[COUNTER_MSB:COUNTER_LSB];   
 
-  assign fetchHit_o    = fetchEntry[VALID_BIT] && (fetchTagBtb == fetchTag) && (!fetchCounter[0]); // bunu fetchteki branch_pred_i ye ver
-  assign fetchTarget_o = fetchEntry[TARGET_MSB:TARGET_LSB]; //dallanacağı adres
-  assign exHit       = exEntry_[VALID_BIT] && (exTagBtb == exTag); // bu hit olduğunuda counter güncellenir sadece
+  assign fetchHit_o    = fetchEntry[VALID_BIT] && (fetchTagBtb == fetchTag) && (!fetchCounter[0]); 
+  assign fetchTarget_o = fetchEntry[TARGET_MSB:TARGET_LSB]; 
+  assign exHit       = exEntry_[VALID_BIT] && (exTagBtb == exTag);
   assign count       = exCounter;
 
   localparam [1:0]

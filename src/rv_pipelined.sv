@@ -20,8 +20,8 @@ import riscv_pkg::*;
 );
 
 //F-D
-logic  [XLEN-1:0] next_pc;
-logic             next_pc_enable;
+logic  [XLEN-1:0] true_pc;
+logic             btb_update;
 logic  [XLEN-1:0] pcF_D;
 logic  [XLEN-1:0] instrF_D;
 
@@ -79,6 +79,7 @@ logic             bTakenF;
 logic             bTakenD;
 
 logic             wrong_branch;
+logic  [XLEN-1:0] btb_target;
 
 
 assign reg_addr_o = rdWB_addr;
@@ -87,104 +88,102 @@ assign reg_data_o = rdWB_data;
 fetch #(
   .IMemInitFile(IMemInitFile)
 )i_fetch(
-  .tb_update_o(updateFD),
-  .clk_i(clk_i),
-  .rstn_i(rstn_i),
-  .hitF_i(hitF),
-  .next_pc_ena(next_pc_enable),
-  .bTaken_o(bTakenF),
-  .stallFD_i(stallFD),
-  .flushD_i(flushD),
-  .instrE_i(instrD_E),
-  .next_pc_i(next_pc),
-  .ex_pc_i(pcD_E),
+  .tb_update_o  (updateFD),
+  .clk_i        (clk_i),
+  .rstn_i       (rstn_i),
+  .hitF_i       (hitF),
+  .bTaken_o     (bTakenF),
+  .stallFD_i    (stallFD),
+  .flushD_i     (flushD),
+  .true_pc_i    (true_pc),
   .target_addr_i(target_addr),
-  .pcF_o(pcF_D),
-  .instrF_o(instrF_D),
-  .pcq_o(pc_q)
+  .pcF_o        (pcF_D),
+  .instrF_o     (instrF_D),
+  .pcq_o        (pc_q)
 );
 
 decode i_decode(
-  .clk_i(clk_i),
-  .rstn_i(rstn_i),
-  .tb_update_i(updateFD),
-  .tb_update_o(updateDE),
-  .pcD_i(pcF_D),
-  .instrD_i(instrF_D),
-  .rs1D_addr_o(rs1D_E_addr),
-  .rs2D_addr_o(rs2D_E_addr),
-  .rdD_data_i(rdWB_data),     
-  .rdD_addr_i(rdWB_addr),     
-  .rdD_wr_ena_i(rdWB_wr_ena),  
-  .flushE_i(flushE),
-  .pcD_o(pcD_E),
-  .instrD_o(instrD_E),
-  .operationD_o(operationD_E),
-  .rs1D_data_o(rs1D_E_data),
-  .rs2D_data_o(rs2D_E_data),
-  .rdD_addr_o(rdD_E_addr),
-  .rdD_wr_ena_o(rdD_E_wr_ena),
-  .memD_wr_ena_o(memD_E_wr_ena),
-  .shamtD_data_o(shamtD_E_data),
-  .immD_o(immD_E),
-  .isCompressed_o(isCompressed),
-  .bTakenD_i(bTakenF),
-  .bTakenD_o(bTakenD)
+  .clk_i          (clk_i),
+  .rstn_i         (rstn_i),
+  .tb_update_i    (updateFD),
+  .tb_update_o    (updateDE),
+  .pcD_i          (pcF_D),
+  .instrD_i       (instrF_D),
+  .rs1D_addr_o    (rs1D_E_addr),
+  .rs2D_addr_o    (rs2D_E_addr),
+  .rdD_data_i     (rdWB_data),     
+  .rdD_addr_i     (rdWB_addr),     
+  .rdD_wr_ena_i   (rdWB_wr_ena),  
+  .flushE_i       (flushE),
+  .pcD_o          (pcD_E),
+  .instrD_o       (instrD_E),
+  .operationD_o   (operationD_E),
+  .rs1D_data_o    (rs1D_E_data),
+  .rs2D_data_o    (rs2D_E_data),
+  .rdD_addr_o     (rdD_E_addr),
+  .rdD_wr_ena_o   (rdD_E_wr_ena),
+  .memD_wr_ena_o  (memD_E_wr_ena),
+  .shamtD_data_o  (shamtD_E_data),
+  .immD_o         (immD_E),
+  .isCompressed_o (isCompressed),
+  .bTakenD_i      (bTakenF),
+  .bTakenD_o      (bTakenD)
 );
 
 execute i_execute(
-  .clk_i(clk_i),
-  .rstn_i(rstn_i),
-  .tb_update_i(updateDE),
-  .tb_update_o(updateEM),
-  .isCompressed_i(isCompressed),
-  .pcE_i(pcD_E),
-  .instrE_i(instrD_E),
-  .forwardAE_i(forwardA),
-  .forwardBE_i(forwardB),
-  .rs1E_addr_i(rs1D_E_addr),
-  .rs2E_addr_i(rs2D_E_addr),
-  .rs1E_addr_o(rs1E_H_addr),
-  .rs2E_addr_o(rs2E_H_addr),
-  .forwM_data_i(rdE_M_data),
-  .forwW_data_i(rdWB_data),
-  .operationE_i(operationD_E),
-  .rs1E_data_i(rs1D_E_data),
-  .rs2E_data_i(rs2D_E_data),
-  .rdE_addr_i(rdD_E_addr),
-  .rdE_wrt_ena_i(rdD_E_wr_ena),
-  .memE_wrt_ena_i(memD_E_wr_ena),
-  .shamt_dataE_i(shamtD_E_data),
-  .immE_i(immD_E),
-  .pcE_o(pcE_M),
-  .instrE_o(instrE_M),
-  .operationE_o(operationE_M),
+  .clk_i          (clk_i),
+  .rstn_i         (rstn_i),
+  .tb_update_i    (updateDE),
+  .tb_update_o    (updateEM),
+  .isCompressed_i (isCompressed),
+  .pcE_i          (pcD_E),
+  .instrE_i       (instrD_E),
+  .forwardAE_i    (forwardA),
+  .forwardBE_i    (forwardB),
+  .rs1E_addr_i    (rs1D_E_addr),
+  .rs2E_addr_i    (rs2D_E_addr),
+  .rs1E_addr_o    (rs1E_H_addr),
+  .rs2E_addr_o    (rs2E_H_addr),
+  .forwM_data_i   (rdE_M_data),
+  .forwW_data_i   (rdWB_data),
+  .operationE_i   (operationD_E),
+  .rs1E_data_i    (rs1D_E_data),
+  .rs2E_data_i    (rs2D_E_data),
+  .rdE_addr_i     (rdD_E_addr),
+  .rdE_wrt_ena_i  (rdD_E_wr_ena),
+  .memE_wrt_ena_i (memD_E_wr_ena),
+  .shamt_dataE_i  (shamtD_E_data),
+  .immE_i         (immD_E),
+  .pcE_o          (pcE_M),
+  .instrE_o       (instrE_M),
+  .operationE_o   (operationE_M),
   .rdE_data_o     (rdE_M_data),
   .rdE_addr_o     (rdE_M_addr),
   .rdE_wr_ena_o   (rdE_M_wr_ena),
   .memE_wr_ena_o  (memE_M_wr_ena),
   .memE_addr_o    (memE_M_addr),
   .memE_wr_data_o (memE_M_wr_data),
-  .next_pc_ena_o(next_pc_enable),
-  .next_pc_o(next_pc),
-  .bTakenE_i(bTakenD),
-  .wrong_branch_o(wrong_branch)
+  .btb_update_o   (btb_update),
+  .btb_target_o   (btb_target),
+  .bTakenE_i      (bTakenD),
+  .wrong_branch_o (wrong_branch),
+  .pcE_target_o   (true_pc)
 );
 
 memory #(
   .DMemInitFile(DMemInitFile)
 )i_memory(
-  .tb_addr_i(addr_i),
-  .tb_data_o(data_o),
-  .tb_mem_wrt_o(mem_wrt_o),
-  .tb_mem_read_o(mem_read_o),
-  .tb_update_i(updateEM),
-  .tb_update_o(update_o),
-  .clk_i(clk_i),
-  .rstn_i(rstn_i),
-  .pcM_i(pcE_M),
-  .instrM_i(instrE_M),
-  .operationM_i(operationE_M),
+  .tb_addr_i      (addr_i),
+  .tb_data_o      (data_o),
+  .tb_mem_wrt_o   (mem_wrt_o),
+  .tb_mem_read_o  (mem_read_o),
+  .tb_update_i    (updateEM),
+  .tb_update_o    (update_o),
+  .clk_i          (clk_i),
+  .rstn_i         (rstn_i),
+  .pcM_i          (pcE_M),
+  .instrM_i       (instrE_M),
+  .operationM_i   (operationE_M),
   .rdM_data_i     (rdE_M_data),
   .rdM_addr_i     (rdE_M_addr),
   .rdM_wr_ena_i   (rdE_M_wr_ena),
@@ -201,35 +200,33 @@ memory #(
 );
 
 hazard_unit i_hazard_unit(
-  .rs1E_addr_i(rs1E_H_addr),
-  .rs2E_addr_i(rs2E_H_addr),
-  .rdM_addr_i(rdE_M_addr),
-  .rdW_addr_i(rdWB_addr),
-  .rdM_wr_ena_i(rdE_M_wr_ena),
-  .rdW_wr_ena_i(rdWB_wr_ena),
-  .forwardAE_o(forwardA),
-  .forwardBE_o(forwardB),
-  .rs1D_addr_i(instrF_D[19:15]),
-  .rs2D_addr_i(instrF_D[24:20]),
-  .rdE_addr_i(rdD_E_addr),
-  .opE_i(operationD_E),
-  .stallFD_o(stallFD),
-  .flushE_o(flushE),
-  .wrong_branch_i(wrong_branch),
-  .flushD_o(flushD)
+  .rs1E_addr_i    (rs1E_H_addr),
+  .rs2E_addr_i    (rs2E_H_addr),
+  .rdM_addr_i     (rdE_M_addr),
+  .rdW_addr_i     (rdWB_addr),
+  .rdM_wr_ena_i   (rdE_M_wr_ena),
+  .rdW_wr_ena_i   (rdWB_wr_ena),
+  .forwardAE_o    (forwardA),
+  .forwardBE_o    (forwardB),
+  .rs1D_addr_i    (instrF_D[19:15]),
+  .rs2D_addr_i    (instrF_D[24:20]),
+  .rdE_addr_i     (rdD_E_addr),
+  .opE_i          (operationD_E),
+  .stallFD_o      (stallFD),
+  .flushE_o       (flushE),
+  .wrong_branch_i (wrong_branch),
+  .flushD_o       (flushD)
 );
 
 branchPredictor i_branchPredictor(
-  .clk_i(clk_i),
-  .rstn_i(rstn_i),
-  .fetchPc_i(pc_q),
-  .fetchHit_o(hitF),
-  .fetchTarget_o(target_addr),
-  .exTaken_i(next_pc_enable),
-  .exPc_i(pcD_E),
-  .exTarget_i(next_pc)  
+  .clk_i         (clk_i),
+  .rstn_i        (rstn_i),
+  .fetchPc_i     (pc_q),
+  .fetchHit_o    (hitF),
+  .fetchTarget_o (target_addr),
+  .exTaken_i     (btb_update),
+  .exPc_i        (pcD_E),
+  .exTarget_i    (btb_target)  
 );
-
-
 
 endmodule

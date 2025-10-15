@@ -9,13 +9,13 @@ import riscv_pkg::*;
   input  logic             clk_i,
   input  logic             rstn_i,
   input  logic             hitF_i,
-  input  logic             next_pc_ena,
+
   output logic             bTaken_o,
   input  logic             stallFD_i, //STALL(LW)
   input  logic             flushD_i,  //WRONG BRANCH
-  input  logic  [XLEN-1:0] instrE_i,
-  input  logic  [XLEN-1:0] next_pc_i,
-  input  logic  [XLEN-1:0] ex_pc_i,
+
+  input  logic  [XLEN-1:0] true_pc_i,
+
   input  logic  [XLEN-1:0] target_addr_i,//Branch pred addr
   output logic  [XLEN-1:0] pcF_o,
   output logic  [XLEN-1:0] instrF_o,
@@ -45,6 +45,9 @@ import riscv_pkg::*;
   logic tb_update_d;
   assign tb_update_d = (!stallFD_i) ? ((flushD_i) ? 0 : 1) : tb_update_o;
 
+  logic hitF_d;
+  assign hitF_d = (flushD_i) ? 0 : hitF_i;
+
   //IF-ID
   always_ff @(posedge clk_i) begin 
     if (!rstn_i) begin
@@ -58,7 +61,7 @@ import riscv_pkg::*;
       end
       instrF_o    <= instrF_d;
       tb_update_o <= tb_update_d;
-      bTaken_o    <= hitF_i;
+      bTaken_o    <= hitF_d;
     end
   end
 
@@ -72,14 +75,8 @@ import riscv_pkg::*;
   end
 
   always_comb begin
-    if (flushD_i & next_pc_ena) begin
-      pc_d = next_pc_i;
-    end else if(flushD_i & !next_pc_ena) begin
-      if(instrE_i[1:0] == 2'b11) begin
-        pc_d = ex_pc_i + 4;
-      end else begin
-        pc_d = ex_pc_i + 2;
-      end
+    if (flushD_i) begin
+      pc_d = true_pc_i;
     end else if(stallFD_i) begin
       pc_d = pc_q;
     end else if(hitF_i) begin

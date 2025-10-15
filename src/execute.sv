@@ -51,11 +51,12 @@ module execute
     output logic  [XLEN-1:0]   memE_wr_data_o,
 
     //BRANCH SIGNALS (COMB)
-    output logic               next_pc_ena_o,
-    output logic  [XLEN-1:0]   next_pc_o,
+    output logic               btb_update_o,
+    output logic  [XLEN-1:0]   btb_target_o,
 
     input  logic               bTakenE_i,
-    output logic               wrong_branch_o
+    output logic               wrong_branch_o,
+    output logic  [XLEN-1:0]   pcE_target_o
 );
 
     logic  [XLEN-1:0] mem_addr_d;
@@ -67,8 +68,21 @@ module execute
 
     logic  [XLEN-1:0] rs1_data_d;
     logic  [XLEN-1:0] rs2_data_d;
+    
+    logic  [XLEN-1:0] next_pc;
+    assign next_pc = (isCompressed_i) ? pcE_i + 2 : pcE_i + 4;
 
-    assign wrong_branch_o = bTakenE_i ^ next_pc_ena_o;
+    logic             isJalr;
+    logic             branchFlag;
+    logic             pcSel;
+    logic             isB_type;
+    assign btb_target_o   = immE_i + pcE_i;
+    assign isJalr         = (operationE_i == JALR);
+    assign btb_update_o   = (!isJalr & pcSel);
+    assign pcE_target_o   = (!pcSel & bTakenE_i) ? next_pc : (isJalr ? (immE_i + rs1_data_d) : (immE_i + pcE_i));
+    assign pcSel          = (isB_type & branchFlag) | (operationE_i inside {JAL,JALR});  
+    assign wrong_branch_o = (bTakenE_i ^ pcSel);
+
 
     always_comb begin
       case(forwardAE_i)
@@ -111,9 +125,9 @@ module execute
     assign rdE_wr_ena_d    = rdE_wrt_ena_i;
 
     always_comb begin : execute_block
-      next_pc_ena_o  = 0;
-      next_pc_o      = 0;
       rdE_data_d     = 0;
+      branchFlag     = 0;
+      isB_type       = 0;
       case(operationE_i)
         LUI: begin
           rdE_data_d     = immE_i;
@@ -122,61 +136,49 @@ module execute
           rdE_data_d     = immE_i + pcE_i;
         end
         JAL: begin
-          next_pc_ena_o = 1'b1;
-          next_pc_o = immE_i + pcE_i;
-          if(isCompressed_i) begin
-            rdE_data_d     = pcE_i + 2; // if isComp is asserted, rdE_data_d should be pcE_i + 2
-          end else begin
-            rdE_data_d     = pcE_i + 4;
-          end
+          branchFlag = 1;
+          rdE_data_d     = next_pc;
         end
         JALR: begin
-          next_pc_ena_o = 1'b1;
-          next_pc_o = immE_i + rs1_data_d;
-          if(isCompressed_i) begin
-            rdE_data_d     = pcE_i + 2; // if isComp is asserted, rdE_data_d should be pcE_i + 2
-          end else begin
-            rdE_data_d     = pcE_i + 4;
+          branchFlag = 1;
+          rdE_data_d  = next_pc;
+        end
+        BEQ: begin
+          isB_type = 1;
+          if (rs1_data_d == rs2_data_d) begin
+            branchFlag = 1;
           end
         end
-        BEQ:
-          if (rs1_data_d == rs2_data_d) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
-          end
-        BNE:
+        BNE: begin
+          isB_type = 1;
           if (rs1_data_d != rs2_data_d) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
+            branchFlag = 1;
           end
-        BLT:
+        end
+        BLT: begin
+          isB_type = 1;
           if ($signed(rs1_data_d) < $signed(rs2_data_d)) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
+            branchFlag = 1;
           end
-        BGE:
+        end
+        BGE: begin
+          isB_type = 1;
           if ($signed(rs1_data_d) >= $signed(rs2_data_d)) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
+            branchFlag = 1;
           end
-        BLTU: 
+        end
+        BLTU: begin
+          isB_type = 1;
           if (rs1_data_d < rs2_data_d) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
+            branchFlag = 1;
           end
-        BGEU: 
+        end
+        BGEU: begin
+          isB_type = 1;
           if (rs1_data_d >= rs2_data_d) begin
-            next_pc_o = immE_i + pcE_i;
-            next_pc_ena_o = 1'b1;
+            branchFlag = 1;
           end  
-        LB  : ;
-        LH  : ;
-        LW  : ;
-        LBU : ;
-        LHU : ;
-        SB  : ;
-        SH  : ;
-        SW  : ; 
+        end
         ADDI : begin
           rdE_data_d     = $signed(immE_i) + $signed(rs1_data_d);
         end
@@ -234,7 +236,6 @@ module execute
         AND: begin
           rdE_data_d     = rs1_data_d & rs2_data_d;
         end
-        UNKNOWN: ;
       endcase
     end
 
@@ -264,5 +265,4 @@ module execute
         tb_update_o     <= tb_update_i;
       end
     end
-
 endmodule
