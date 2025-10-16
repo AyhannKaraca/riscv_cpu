@@ -218,7 +218,9 @@ hazard_unit i_hazard_unit(
   .flushD_o       (flushD)
 );
 
-branchPredictor i_branchPredictor(
+branchPredictor#(
+  .B_PRED_ACTIVE(1)
+) i_branchPredictor(
   .clk_i         (clk_i),
   .rstn_i        (rstn_i),
   .fetchPc_i     (pc_q),

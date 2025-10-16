@@ -130,18 +130,18 @@ module execute
       isB_type       = 0;
       case(operationE_i)
         LUI: begin
-          rdE_data_d     = immE_i;
+          rdE_data_d = immE_i;
         end 
         AUIPC: begin
-          rdE_data_d     = immE_i + pcE_i;
+          rdE_data_d = immE_i + pcE_i;
         end
         JAL: begin
           branchFlag = 1;
-          rdE_data_d     = next_pc;
+          rdE_data_d = next_pc;
         end
         JALR: begin
           branchFlag = 1;
-          rdE_data_d  = next_pc;
+          rdE_data_d = next_pc;
         end
         BEQ: begin
           isB_type = 1;
@@ -180,61 +180,69 @@ module execute
           end  
         end
         ADDI : begin
-          rdE_data_d     = $signed(immE_i) + $signed(rs1_data_d);
+          rdE_data_d = $signed(immE_i) + $signed(rs1_data_d);
         end
         SLTI : begin
-          if ($signed(rs1_data_d) < $signed(immE_i)) rdE_data_d = 32'b1;
+          if ($signed(rs1_data_d) < $signed(immE_i))begin
+            rdE_data_d = 32'b1;
+          end
         end
         SLTIU: begin
-          if (rs1_data_d < immE_i) rdE_data_d = 32'b1;
+          if (rs1_data_d < immE_i) begin
+            rdE_data_d = 32'b1;
+          end
         end
         XORI : begin
-          rdE_data_d     = rs1_data_d ^ immE_i;
+          rdE_data_d = rs1_data_d ^ immE_i;
         end
         ORI  :begin
-          rdE_data_d     = rs1_data_d | immE_i;
+          rdE_data_d = rs1_data_d | immE_i;
         end
         ANDI :begin
-          rdE_data_d     = rs1_data_d & immE_i;
+          rdE_data_d = rs1_data_d & immE_i;
         end
         SLLI: begin
-          rdE_data_d     = rs1_data_d << shamt_dataE_i;
+          rdE_data_d = rs1_data_d << shamt_dataE_i;
         end 
         SRLI: begin
-          rdE_data_d     = rs1_data_d >> shamt_dataE_i;
+          rdE_data_d = rs1_data_d >> shamt_dataE_i;
         end
         SRAI: begin
-          rdE_data_d     = $signed(rs1_data_d) >>> shamt_dataE_i;
+          rdE_data_d = $signed(rs1_data_d) >>> shamt_dataE_i;
         end
         ADD: begin
-          rdE_data_d     = rs1_data_d + rs2_data_d;
+          rdE_data_d = rs1_data_d + rs2_data_d;
         end
         SUB: begin
-          rdE_data_d     = rs1_data_d - rs2_data_d;
+          rdE_data_d = rs1_data_d - rs2_data_d;
         end
         SLL: begin
-          rdE_data_d     = rs1_data_d << rs2_data_d[4:0];
+          rdE_data_d = rs1_data_d << rs2_data_d[4:0];
         end
         SLT: begin
-          if ($signed(rs1_data_d) < $signed(rs2_data_d))  rdE_data_d     = 32'b1;
+          if ($signed(rs1_data_d) < $signed(rs2_data_d)) begin
+            rdE_data_d     = 32'b1;
+          end  
         end
         SLTU: begin
-          if (rs1_data_d < rs2_data_d)  rdE_data_d     = 32'b1;
+          if (rs1_data_d < rs2_data_d) begin
+            rdE_data_d = 32'b1;
+          end 
         end
         XOR: begin
-          rdE_data_d     = rs1_data_d ^ rs2_data_d;  
+          rdE_data_d = rs1_data_d ^ rs2_data_d;  
         end
         SRL: begin
-          rdE_data_d     = rs1_data_d >> rs2_data_d[4:0];
+          rdE_data_d = rs1_data_d >> rs2_data_d[4:0];
         end
         SRA: begin
-          rdE_data_d     = $signed(rs1_data_d) >>> rs2_data_d;
+          rdE_data_d = $signed(rs1_data_d) >>> rs2_data_d;
         end
         OR: begin
-          rdE_data_d     = rs1_data_d | rs2_data_d;
+          rdE_data_d = rs1_data_d | rs2_data_d;
         end
         AND: begin
-          rdE_data_d     = rs1_data_d & rs2_data_d;
+          rdE_data_d = rs1_data_d & rs2_data_d;
         end
       endcase
     end

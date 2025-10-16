@@ -18,6 +18,7 @@ wave: run
 	gtkwave --dark dump.vcd
 
 # 4 byte display--> xxd -p -c 4 $(TEST_FILE).bin | sed 's/\(..\)\(..\)\(..\)\(..\)/\4\3\2\1/' > $(TEST_FILE).hex
+# 2 byte display--> xxd -p -c 2 $(TEST_FILE).bin | sed 's/\(..\)\(..\)/\2\1/' > $(TEST_FILE).hex
 test:
 	cd test/$(TEST_FILE) && \
 	/opt/riscv/bin/riscv32-unknown-elf-as -march=rv32ic -mabi=ilp32 -o $(TEST_FILE).o $(TEST_FILE).s && \

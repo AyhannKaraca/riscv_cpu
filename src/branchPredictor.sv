@@ -3,7 +3,8 @@ module branchPredictor #(
     parameter int TARGET_WIDTH   = 32,
     parameter int COUNTER_WIDTH  = 2,           
     parameter int INDEX_WIDTH    = $clog2(BTB_ENTRIES), //6
-    parameter int TAG_WIDTH      = 32 - INDEX_WIDTH     //26
+    parameter int TAG_WIDTH      = 32 - INDEX_WIDTH,     //26
+    parameter bit B_PRED_ACTIVE  = 1
   )(
     input  logic                    clk_i,
     input  logic                    rstn_i,
@@ -51,16 +52,16 @@ module branchPredictor #(
   assign fetchCounter = fetchEntry[COUNTER_MSB:COUNTER_LSB]; 
   assign exCounter    = exEntry_[COUNTER_MSB:COUNTER_LSB];   
 
-  assign fetchHit_o    = fetchEntry[VALID_BIT] && (fetchTagBtb == fetchTag) && (!fetchCounter[0]); 
+  assign fetchHit_o    = fetchEntry[VALID_BIT] && (fetchTagBtb == fetchTag) && (fetchCounter[1]); 
   assign fetchTarget_o = fetchEntry[TARGET_MSB:TARGET_LSB]; 
   assign exHit       = exEntry_[VALID_BIT] && (exTagBtb == exTag);
   assign count       = exCounter;
 
   localparam [1:0]
-             sTaken = 2'b10,
-             wTaken = 2'b00, //default taken
+             sTaken = 2'b11,
+             wTaken = 2'b10,
              wNtaken = 2'b01,
-             sNtaken = 2'b11;
+             sNtaken = 2'b00;
 
 
   always_comb
@@ -102,10 +103,12 @@ module branchPredictor #(
         btb_mem[i] <= '0;
       end
     end else begin
-      if (exHit | exTaken_i) begin
-        btb_mem[exIndex] <= exEntryUpdated;
+      if(B_PRED_ACTIVE) begin
+          if (exHit | exTaken_i) begin
+            btb_mem[exIndex] <= exEntryUpdated;
+          end
+        end
       end
-    end
   end
 
 endmodule

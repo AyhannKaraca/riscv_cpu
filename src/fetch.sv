@@ -22,31 +22,32 @@ import riscv_pkg::*;
   output logic  [XLEN-1:0] pcq_o
 );
   localparam int MEM_SIZE = 4096;
-  logic [15:0] imem [MEM_SIZE*2-1:0];
+  logic [15:0] imem [MEM_SIZE-1:0];
   initial $readmemh(IMemInitFile, imem);
 
   logic [XLEN-1:0] pc_d;
-
   logic [XLEN-1:0] pc_q;
-  assign pcq_o = pc_q;
-
   logic [XLEN-1:0] pc2_q;
+  logic [XLEN-1:0] pcF_d;
+  
   assign pc2_q = pc_q + 2;
-
+  assign pcq_o = pc_q;
+  assign pcF_d = (stallFD_i) ? pcF_o : pc_q;
 
   logic  [    15:0] instrLowerF_d;
   logic  [    15:0] instrUpperF_d;
 
-  assign instrLowerF_d  = imem[pc_q[$clog2(MEM_SIZE*2):1]];
-  assign instrUpperF_d  = imem[pc2_q[$clog2(MEM_SIZE*2):1]];
+  assign instrLowerF_d  = imem[pc_q[$clog2(MEM_SIZE):1]];
+  assign instrUpperF_d  = imem[pc2_q[$clog2(MEM_SIZE):1]];
 
   logic  [XLEN-1:0] instrF_d;
 
   logic tb_update_d;
   assign tb_update_d = (!stallFD_i) ? ((flushD_i) ? 0 : 1) : tb_update_o;
 
-  logic hitF_d;
-  assign hitF_d = (flushD_i) ? 0 : hitF_i;
+  logic bTaken_d;
+  assign bTaken_d = (flushD_i)  ? 0 : 
+                    (stallFD_i) ? bTaken_o : hitF_i;
 
   //IF-ID
   always_ff @(posedge clk_i) begin 
@@ -56,10 +57,8 @@ import riscv_pkg::*;
       tb_update_o <= 0;
       bTaken_o    <= 0;
     end else begin
-      if(!stallFD_i) begin
-        pcF_o    <= pc_q;
-        bTaken_o    <= hitF_d;
-      end
+      pcF_o       <= pcF_d;
+      bTaken_o    <= bTaken_d;
       instrF_o    <= instrF_d;
       tb_update_o <= tb_update_d;
     end

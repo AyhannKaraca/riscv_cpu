@@ -42,7 +42,7 @@ import riscv_pkg::*;
     output logic             rdM_wr_ena_o
 );
 
-    localparam int MEM_SIZE = 4096;
+    localparam int MEM_SIZE = 128;
     logic [31:0]     dmem [MEM_SIZE-1:0];
     initial $readmemh(DMemInitFile, dmem);
     
