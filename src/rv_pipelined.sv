@@ -219,7 +219,7 @@ hazard_unit i_hazard_unit(
 );
 
 branchPredictor#(
-  .B_PRED_ACTIVE(1)
+  .B_PRED_ACTIVE(0)
 ) i_branchPredictor(
   .clk_i         (clk_i),
   .rstn_i        (rstn_i),

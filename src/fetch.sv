@@ -11,12 +11,12 @@ import riscv_pkg::*;
   input  logic             hitF_i,
 
   output logic             bTaken_o,
-  input  logic             stallFD_i, //STALL(LW)
-  input  logic             flushD_i,  //WRONG BRANCH
+  input  logic             stallFD_i, 
+  input  logic             flushD_i,  
 
   input  logic  [XLEN-1:0] true_pc_i,
 
-  input  logic  [XLEN-1:0] target_addr_i,//Branch pred addr
+  input  logic  [XLEN-1:0] target_addr_i,
   output logic  [XLEN-1:0] pcF_o,
   output logic  [XLEN-1:0] instrF_o,
   output logic  [XLEN-1:0] pcq_o

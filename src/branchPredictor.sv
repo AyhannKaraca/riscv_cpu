@@ -37,25 +37,25 @@ module branchPredictor #(
   logic [1:0] count, nextCount;
   logic exHit;
 
-  assign fetchIndex = fetchPc_i[INDEX_WIDTH:1]; 
-  assign exIndex    = exPc_i[INDEX_WIDTH:1];
+  assign fetchIndex    = fetchPc_i[INDEX_WIDTH:1]; 
+  assign exIndex       = exPc_i[INDEX_WIDTH:1];
 
-  assign fetchEntry = btb_mem[fetchIndex]; 
-  assign exEntry_   = btb_mem[exIndex];    
+  assign fetchEntry    = btb_mem[fetchIndex]; 
+  assign exEntry_      = btb_mem[exIndex];    
 
-  assign fetchTag   = fetchPc_i[31:INDEX_WIDTH]; 
-  assign exTag      = exPc_i[31:INDEX_WIDTH];    
+  assign fetchTag      = fetchPc_i[31:INDEX_WIDTH]; 
+  assign exTag         = exPc_i[31:INDEX_WIDTH];    
  
-  assign fetchTagBtb = fetchEntry[TAG_MSB:TAG_LSB]; 
-  assign exTagBtb    = exEntry_[TAG_MSB:TAG_LSB];   
+  assign fetchTagBtb   = fetchEntry[TAG_MSB:TAG_LSB]; 
+  assign exTagBtb      = exEntry_[TAG_MSB:TAG_LSB];   
 
-  assign fetchCounter = fetchEntry[COUNTER_MSB:COUNTER_LSB]; 
-  assign exCounter    = exEntry_[COUNTER_MSB:COUNTER_LSB];   
+  assign fetchCounter  = fetchEntry[COUNTER_MSB:COUNTER_LSB]; 
+  assign exCounter     = exEntry_[COUNTER_MSB:COUNTER_LSB];   
 
   assign fetchHit_o    = fetchEntry[VALID_BIT] && (fetchTagBtb == fetchTag) && (fetchCounter[1]); 
   assign fetchTarget_o = fetchEntry[TARGET_MSB:TARGET_LSB]; 
-  assign exHit       = exEntry_[VALID_BIT] && (exTagBtb == exTag);
-  assign count       = exCounter;
+  assign exHit         = exEntry_[VALID_BIT] && (exTagBtb == exTag);
+  assign count         = exCounter;
 
   localparam [1:0]
              sTaken = 2'b11,
@@ -64,8 +64,7 @@ module branchPredictor #(
              sNtaken = 2'b00;
 
 
-  always_comb
-  begin
+  always_comb begin
     case (count)
       wTaken:
         nextCount = exTaken_i ? sTaken : wNtaken;
@@ -80,8 +79,7 @@ module branchPredictor #(
     endcase
   end
 
-  always_comb
-  begin
+  always_comb begin
     exEntryUpdated = '0;
     if (exHit)
     begin
