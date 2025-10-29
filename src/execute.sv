@@ -46,7 +46,7 @@ module execute
     
 
     //MEM WR SIGNALS
-    output logic               memE_wr_ena_o,
+    //output logic               memE_wr_ena_o,
     output logic  [XLEN-1:0]   memE_addr_o,
     output logic  [XLEN-1:0]   memE_wr_data_o,
 
@@ -56,8 +56,32 @@ module execute
 
     input  logic               bTakenE_i,
     output logic               wrong_branch_o,
-    output logic  [XLEN-1:0]   pcE_target_o
+    output logic  [XLEN-1:0]   pcE_target_o,
+
+    // --axi
+    input  logic               stallM_i,
+    output logic               start_wrt_o,
+    output logic               start_read_o,
+
+    input  logic [XLEN-1:0]    M_RDATA,
+    output logic   [3:0]       M_WSTRB,         
+    output logic [XLEN-1:0]    addr_o,       
+    output logic [XLEN-1:0]    wrt_data_o       
 );
+    
+    assign start_wrt_o  = memE_wrt_ena_i & stallM_i;
+    assign start_read_o = (operationE_i inside {LB,LH,LW,LBU,LHU}) & stallM_i;
+    assign addr_o       = mem_addr_d;
+    assign wrt_data_o   = mem_wrt_data_d;
+
+    always_comb begin
+      M_WSTRB = 4'b1111;
+      case(operationE_i)
+        SB: M_WSTRB = 4'b0001;
+        SH: M_WSTRB = 4'b0011;
+        SW: M_WSTRB = 4'b1111;
+      endcase
+    end
 
     logic  [XLEN-1:0] mem_addr_d;
     logic  [XLEN-1:0] mem_wrt_data_d;
@@ -244,6 +268,11 @@ module execute
         AND: begin
           rdE_data_d = rs1_data_d & rs2_data_d;
         end
+        LB: rdE_data_d = M_RDATA;
+        LH: rdE_data_d = M_RDATA;
+        LW: rdE_data_d = M_RDATA;
+        LBU:rdE_data_d = M_RDATA;
+        LHU:rdE_data_d = M_RDATA;
       endcase
     end
 
@@ -256,21 +285,23 @@ module execute
         rdE_data_o      <= '0;
         rdE_addr_o      <= '0;
         rdE_wr_ena_o    <= '0;
-        memE_wr_ena_o   <= '0;
+        //memE_wr_ena_o   <= '0;
         memE_addr_o     <= '0;
         memE_wr_data_o  <= '0;
         tb_update_o     <= 0;
-      end else begin
+      end else if(!stallM_i) begin
         pcE_o           <= pcE_i;
         instrE_o        <= instrE_i;
         operationE_o    <= operationE_i;
         rdE_data_o      <= rdE_data_d;
         rdE_addr_o      <= rdE_addr_i;
         rdE_wr_ena_o    <= rdE_wrt_ena_i;
-        memE_wr_ena_o   <= memE_wrt_ena_d;
+        //memE_wr_ena_o   <= memE_wrt_ena_d;
         memE_addr_o     <= mem_addr_d;
         memE_wr_data_o  <= mem_wrt_data_d;
-        tb_update_o     <= tb_update_i;
+        tb_update_o     <= 1;
+      end else begin
+        tb_update_o     <= 1;
       end
     end
 endmodule

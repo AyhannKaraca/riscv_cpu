@@ -37,7 +37,9 @@ module decode
     output logic             isCompressed_o,
     
     input  logic             bTakenD_i,
-    output logic             bTakenD_o
+    output logic             bTakenD_o,
+
+    input  logic             stallE_i
 );
     logic [XLEN-1:0] rf   [31:0];
     alu_ctrl_e       operation_d;
@@ -281,7 +283,8 @@ module decode
           endcase 
       endcase
     end
-
+    
+    //WB
     always_ff @(negedge clk_i) begin
       if (!rstn_i) begin
         for (int i=0; i<32; ++i) begin
@@ -291,7 +294,9 @@ module decode
         rf[rdD_addr_i] <= rdD_data_i;
       end
     end
-
+    logic tb_update_d;
+    assign tb_update_d = (!stallE_i) ? ((flushE_i) ? 0 : 1) : tb_update_o;
+    
     //ID-EX
     always_ff @(posedge clk_i) begin
         if (!rstn_i) begin
@@ -310,6 +315,8 @@ module decode
           tb_update_o      <= 0;
           isCompressed_o   <= 0;
           bTakenD_o        <= 0;
+        end else if(stallE_i) begin
+          tb_update_o      <=  0;
         end else if(!flushE_i) begin
           bTakenD_o        <= bTakenD_i;
           pcD_o            <= pcD_i;

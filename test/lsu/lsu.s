@@ -388,8 +388,6 @@ long_branch_target:
     
     li a0, 0
     j exit
-
-.align 12
 exit:
     nop
     

@@ -81,9 +81,38 @@ logic             bTakenD;
 logic             wrong_branch;
 logic  [XLEN-1:0] btb_target;
 
-
 assign reg_addr_o = rdWB_addr;
 assign reg_data_o = rdWB_data;
+
+
+logic [31:0] AWADDR;
+logic        AWVALID;
+logic        AWREADY;
+logic [31:0] WDATA;
+logic [3:0]  WSTRB;
+logic        WVALID;
+logic        WREADY;
+logic [1:0]  BRESP;
+logic        BVALID;
+logic        BREADY;
+logic [31:0] ARADDR;
+logic        ARVALID;
+logic        ARREADY;
+logic [31:0] RDATA;
+logic [1:0]  RRESP;
+logic        RVALID;
+logic        RREADY;
+
+logic        mem_done;
+logic        stallE;
+logic        stallM;
+logic        start_wrt;
+logic        start_read;
+
+logic [31:0] wrt_data;
+logic [31:0] wrt_addr;
+
+logic stallWB;
 
 fetch #(
   .IMemInitFile(IMemInitFile)
@@ -127,7 +156,8 @@ decode i_decode(
   .immD_o         (immD_E),
   .isCompressed_o (isCompressed),
   .bTakenD_i      (bTakenF),
-  .bTakenD_o      (bTakenD)
+  .bTakenD_o      (bTakenD),
+  .stallE_i       (stallE)
 );
 
 execute i_execute(
@@ -160,19 +190,24 @@ execute i_execute(
   .rdE_data_o     (rdE_M_data),
   .rdE_addr_o     (rdE_M_addr),
   .rdE_wr_ena_o   (rdE_M_wr_ena),
-  .memE_wr_ena_o  (memE_M_wr_ena),
+  //.memE_wr_ena_o  (memE_M_wr_ena),
   .memE_addr_o    (memE_M_addr),
   .memE_wr_data_o (memE_M_wr_data),
   .btb_update_o   (btb_update),
   .btb_target_o   (btb_target),
   .bTakenE_i      (bTakenD),
   .wrong_branch_o (wrong_branch),
-  .pcE_target_o   (true_pc)
+  .pcE_target_o   (true_pc),
+  .stallM_i       (stallM),
+  .start_wrt_o    (start_wrt),
+  .start_read_o   (start_read),
+  .M_RDATA        (RDATA),
+  .M_WSTRB        (WSTRB),      
+  .addr_o         (wrt_addr),       
+  .wrt_data_o     (wrt_data)    
 );
 
-memory #(
-  .DMemInitFile(DMemInitFile)
-)i_memory(
+memory i_memory(
   .tb_addr_i      (addr_i),
   .tb_data_o      (data_o),
   .tb_mem_wrt_o   (mem_wrt_o),
@@ -187,7 +222,7 @@ memory #(
   .rdM_data_i     (rdE_M_data),
   .rdM_addr_i     (rdE_M_addr),
   .rdM_wr_ena_i   (rdE_M_wr_ena),
-  .memM_wrt_ena_i (memE_M_wr_ena),
+  //.memM_wrt_ena_i (memE_M_wr_ena),
   .memM_addr_i    (memE_M_addr),
   .memM_wrt_data_i(memE_M_wr_data),
   .pcM_o          (pc_o),
@@ -196,7 +231,8 @@ memory #(
   .memM_data_o    (mem_data_o),
   .rdM_data_o     (rdWB_data  ),
   .rdM_addr_o     (rdWB_addr  ),
-  .rdM_wr_ena_o   (rdWB_wr_ena)  
+  .rdM_wr_ena_o   (rdWB_wr_ena),
+  .stallWB_i(stallWB)  
 );
 
 hazard_unit i_hazard_unit(
@@ -215,11 +251,15 @@ hazard_unit i_hazard_unit(
   .stallFD_o      (stallFD),
   .flushE_o       (flushE),
   .wrong_branch_i (wrong_branch),
-  .flushD_o       (flushD)
+  .flushD_o        (flushD),
+  .mem_done_i      (mem_done),
+  .stallE_o        (stallE),
+  .stallM_o        (stallM),
+  .stallWB_o       (stallWB)
 );
 
 branchPredictor#(
-  .B_PRED_ACTIVE(0)
+  .B_PRED_ACTIVE(1)
 ) i_branchPredictor(
   .clk_i         (clk_i),
   .rstn_i        (rstn_i),
@@ -230,5 +270,53 @@ branchPredictor#(
   .exPc_i        (pcD_E),
   .exTarget_i    (btb_target)  
 );
+
+axi4_lite_master i_axi4_lite_master(
+  .ACLK       (clk_i),
+  .ARESETN    (rstn_i),
+  .START_READ (start_read),
+  .START_WRITE(start_wrt),
+  .address    (wrt_addr),
+  .W_data     (wrt_data),
+  .M_ARREADY  (ARREADY),
+  .M_RRESP    (RRESP),
+  .M_RVALID   (RVALID),
+  .M_AWREADY  (AWREADY),
+  .M_WREADY   (WREADY),
+  .M_BRESP    (BRESP),
+  .M_BVALID   (BVALID),
+  .M_ARADDR   (ARADDR),
+  .M_ARVALID  (ARVALID),
+  .M_RREADY   (RREADY),
+  .M_AWADDR   (AWADDR),
+  .M_AWVALID  (AWVALID),
+  .M_WDATA    (WDATA),
+  .M_WVALID   (WVALID),
+  .M_BREADY   (BREADY),
+  .mem_done_o (mem_done)
+);
+
+axi4lite_slave_mem i_axi4lite_slave_mem(
+  .ACLK     (clk_i),
+  .ARESETN  (rstn_i),
+  .S_ARADDR (ARADDR),
+  .S_ARVALID(ARVALID),
+  .S_RREADY (RREADY),
+  .S_AWADDR (AWADDR),
+  .S_AWVALID(AWVALID),
+  .S_WDATA  (WDATA),
+  .S_WSTRB  (WSTRB),
+  .S_WVALID (WVALID),
+  .S_BREADY (BREADY),	
+  .S_ARREADY(ARREADY),
+  .S_RDATA  (RDATA),
+  .S_RRESP  (RRESP),
+  .S_RVALID (RVALID),
+  .S_AWREADY(AWREADY),
+  .S_WREADY (WREADY),
+  .S_BRESP  (BRESP),
+  .S_BVALID (BVALID)
+);
+
 
 endmodule

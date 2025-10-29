@@ -2554,6 +2554,5 @@ bgeu1:
     addi x1, x0, 47
     addi x2, x0, 88
     addi x3, x0, 99
-    .align 12
 exit:
     nop

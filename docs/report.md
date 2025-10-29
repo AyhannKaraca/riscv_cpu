@@ -57,10 +57,12 @@ There was a  CPI improvement due to reduced control hazards.
 | `loop.s` | 1.503 | 1.166 |
 
 - full_test.s CPI Output:
+
 ![alt text](./ss/rv32ic-i_no_bp.png)
 ![alt text](./ss/rv32ic-i_no_bp.png)
 
 - loop.s CPI Output:
+
 ![alt text](./ss/loop_test_no_bp.png)
 ![alt text](./ss/loop_test_bp.png)
 

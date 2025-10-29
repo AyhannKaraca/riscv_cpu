@@ -1,2 +1,2 @@
-until pc 0 0x80001000
+until pc 0 0x8000041a
 q

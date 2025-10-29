@@ -18,12 +18,23 @@ import riscv_pkg::*;
   output logic          flushE_o,
   
   input  logic          wrong_branch_i,//wrong_branch
-  output logic          flushD_o
+  output logic          flushD_o,
+
+  input  logic          mem_done_i,
+  output logic          stallE_o,
+  output logic          stallM_o,
+  output logic          stallWB_o
 );
+
+logic mem_stall;
+assign mem_stall = (opE_i inside {LB,LH,LW,LBU,LHU,SB,SH,SW}) & !mem_done_i;
+assign stallE_o = mem_stall;
+assign stallM_o = mem_stall;
+assign stallWB_o = mem_stall;
 
 logic lw_stall;
 assign lw_stall = (opE_i inside {LB,LH,LW,LBU,LHU}) & ((rs1D_addr_i == rdE_addr_i) | (rs2D_addr_i == rdE_addr_i));
-assign stallFD_o = lw_stall;
+assign stallFD_o = lw_stall | mem_stall;
 assign flushD_o = wrong_branch_i;
 assign flushE_o = lw_stall | wrong_branch_i;
 
